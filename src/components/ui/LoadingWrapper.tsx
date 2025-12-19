@@ -11,25 +11,20 @@ interface LoadingWrapperProps {
  * Shows loading every time the app loads
  */
 export default function LoadingWrapper({ children }: LoadingWrapperProps) {
-  console.log('[LoadingWrapper] Rendering');
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    console.log('[LoadingWrapper] useEffect running, isLoading:', isLoading);
     // Always load assets and show loading page
     const loadAssets = async () => {
-      console.log('[LoadingWrapper] Starting asset preload');
       try {
         await preloadHomepageAssets((prog) => {
-          console.log('[LoadingWrapper] Progress update:', prog);
           setProgress(prog);
         }, 2000); // Minimum 2 seconds loading time
         
-        console.log('[LoadingWrapper] Asset preload complete, hiding loading');
         setIsLoading(false);
       } catch (error) {
-        console.error('[LoadingWrapper] Error preloading assets:', error);
+        console.error('Error preloading assets:', error);
         // Still hide loading even if there's an error
         setIsLoading(false);
       }
@@ -37,8 +32,6 @@ export default function LoadingWrapper({ children }: LoadingWrapperProps) {
 
     loadAssets();
   }, []);
-
-  console.log('[LoadingWrapper] Render - isLoading:', isLoading, 'progress:', progress);
 
   return (
     <>

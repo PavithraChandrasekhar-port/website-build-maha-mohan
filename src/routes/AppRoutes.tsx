@@ -13,7 +13,6 @@ const Playground = lazy(() => import('@/playground'));
 
 // Loading fallback component - use our custom LoadingPage during code splitting
 function PageLoader() {
-  console.log('[PageLoader] Suspense fallback rendering - THIS SHOULD SHOW');
   try {
     return (
       <div style={{ 

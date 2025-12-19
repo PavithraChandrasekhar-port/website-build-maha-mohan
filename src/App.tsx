@@ -5,7 +5,6 @@ import LoadingWrapper from './components/ui/LoadingWrapper';
 import AppRoutes from './routes/AppRoutes';
 
 function App() {
-  console.log('[App] Rendering');
   return (
     <ErrorBoundary>
       <BrowserRouter>

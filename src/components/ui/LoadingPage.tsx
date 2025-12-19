@@ -10,17 +10,9 @@ interface LoadingPageProps {
 }
 
 export default function LoadingPage({ progress, onComplete }: LoadingPageProps) {
-  console.log('[LoadingPage] Rendering with progress:', progress);
   const prefersReducedMotion = useReducedMotion();
   const [displayProgress, setDisplayProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
-
-  useEffect(() => {
-    console.log('[LoadingPage] Component mounted');
-    return () => {
-      console.log('[LoadingPage] Component unmounting');
-    };
-  }, []);
 
   // Animate progress counter
   useEffect(() => {
@@ -44,8 +36,6 @@ export default function LoadingPage({ progress, onComplete }: LoadingPageProps) 
   // Calculate clip path for SVG fill (from top to bottom)
   const fillPercentage = displayProgress / 100;
   const clipPath = `inset(${100 - fillPercentage * 100}% 0% 0% 0%)`;
-
-  console.log('[LoadingPage] Rendering JSX, displayProgress:', displayProgress, 'clipPath:', clipPath);
 
   return (
     <motion.div
