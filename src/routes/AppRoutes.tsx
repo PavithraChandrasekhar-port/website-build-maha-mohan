@@ -50,7 +50,6 @@ function PageLoader() {
 }
 
 function AppRoutes() {
-  console.log('[AppRoutes] Rendering');
   return (
     <Suspense fallback={<PageLoader />}>
       <Routes>
