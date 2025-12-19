@@ -1,0 +1,146 @@
+/* Loading Page Styles */
+
+.loading-page {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #561D3C; /* Burgundy color from shader */
+  z-index: 99999; /* Very high z-index to ensure it's on top of everything */
+  overflow: hidden;
+}
+
+.loading-page-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr; /* Left, Center, Right columns */
+  gap: 0;
+}
+
+/* Left Column - Marapachi SVG */
+.loading-page-left {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  border-right: 1px solid rgba(255, 255, 255, 0.1); /* Subtle vertical divider */
+}
+
+.loading-marapachi-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 300px;
+}
+
+.loading-marapachi-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-marapachi-svg {
+  width: 100%;
+  height: auto;
+  max-height: 60vh;
+  object-fit: contain;
+  filter: brightness(1) contrast(1);
+  clip-path: inset(100% 0% 0% 0%); /* Start fully clipped (hidden from top) */
+}
+
+/* Center Column - Landing Name and Subtitle */
+.loading-page-center {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+
+.loading-landing-content {
+  text-align: center;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-landing-name {
+  font-family: 'Ortica Linear', sans-serif;
+  font-weight: 300;
+  font-size: clamp(1rem, 5vw, 1.5rem);
+  line-height: 1;
+  margin-bottom: 0.15rem;
+  letter-spacing: -0.02em;
+  color: #ffffff;
+}
+
+.loading-landing-subtitle {
+  font-family: 'Absans', sans-serif;
+  font-weight: 400;
+  font-size: clamp(0.5rem, 2vw, 1rem);
+  line-height: 1.5;
+  letter-spacing: 0.01em;
+  color: #ffffff;
+}
+
+/* Right Column - Percentage Counter */
+.loading-page-right {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 2rem 3rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.1); /* Subtle vertical divider */
+}
+
+.loading-percentage {
+  font-family: 'Absans', sans-serif;
+  font-weight: 400;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  color: #ffffff;
+  letter-spacing: 0.02em;
+  line-height: 1;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .loading-page-container {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 1fr auto;
+  }
+
+  .loading-page-left {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 2rem 1rem;
+  }
+
+  .loading-marapachi-container {
+    max-width: 200px;
+  }
+
+  .loading-page-center {
+    padding: 2rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .loading-page-right {
+    padding: 1.5rem 2rem;
+    justify-content: center;
+    border-left: none;
+  }
+
+  .loading-percentage {
+    font-size: clamp(1.25rem, 4vw, 2rem);
+  }
+}

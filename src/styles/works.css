@@ -1,0 +1,190 @@
+/* Works Gallery Styles */
+
+.works-gallery {
+  position: relative;
+  min-height: 300vh;
+  background: transparent;
+  padding: 4rem 0;
+  padding-top: 0; /* Start at top when visible */
+  padding-bottom: 20vh; /* Space for one work to be centered */
+  z-index: 3; /* Above landing section (z-index: 1) and blur overlay (z-index: 2) */
+  opacity: 0;
+  transition: opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), 
+              filter 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+              background-color 0.8s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth blur and tint transition */
+  margin-top: 100vh;
+  padding-left: 200px; /* Space for navigation */
+  scroll-margin-top: 0; /* Ensure scroll snaps to top */
+}
+
+.works-gallery.active {
+  opacity: 1;
+}
+
+.works-container {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  padding-right: 2rem;
+}
+
+.work-item {
+  position: relative;
+  cursor: pointer;
+  width: 75vw;
+  margin-left: auto; /* Right align */
+  opacity: 0.4;
+  scale: 0.95;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  will-change: opacity, transform;
+}
+
+.work-item:hover {
+  opacity: 0.7;
+}
+
+.work-item.active:hover {
+  opacity: 1;
+}
+
+.work-item.active {
+  opacity: 1;
+  scale: 1;
+  z-index: 2;
+}
+
+.work-content {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  width: 100%;
+  flex-wrap: nowrap;
+  overflow: visible;
+  padding-right: 75px;
+}
+
+.work-title-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 150px;
+  font-family: 'Absans', sans-serif;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.work-number {
+  font-size: 0.875rem; /* Reduced from 1rem (16px to 14px) */
+  font-weight: 400;
+}
+
+.work-title {
+  font-size: 1rem; /* Slightly bigger */
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+
+.work-image-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  min-height: 312px; /* Maintain height even when image is hidden */
+  align-items: center;
+  min-width: 0; /* Allow flex item to shrink below content size */
+  max-width: 100%;
+}
+
+.work-thumbnail {
+  width: 250px;
+  height: 312px;
+  object-fit: cover;
+  display: block;
+}
+
+.work-view-link {
+  font-family: 'Absans', sans-serif;
+  font-size: 0.75rem; /* Smaller font */
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  transition: color 0.3s ease, font-style 0.3s ease;
+  text-align: right;
+  position: relative;
+  display: inline-block;
+  font-style: normal;
+  flex-shrink: 0; /* Prevent from being pushed off screen */
+  min-width: fit-content;
+}
+
+.work-view-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 1);
+  transition: width 0.4s ease;
+}
+
+.work-view-link:hover {
+  color: rgba(255, 255, 255, 1);
+  font-style: italic;
+}
+
+.work-view-link:hover::after {
+  width: 100%; /* Width matches text width since parent is inline-block */
+}
+
+@media (max-width: 1024px) {
+  .works-gallery {
+    padding-left: 150px;
+  }
+
+  .work-item {
+    width: 75vw;
+  }
+
+  .work-thumbnail {
+    width: 200px;
+    height: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .works-gallery {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .work-item {
+    width: 100vw;
+    padding: 0 1rem;
+  }
+
+  .work-content {
+    flex-direction: column;
+    gap: 1.5rem;
+    align-items: flex-start;
+  }
+
+  .work-title-section {
+    min-width: auto;
+  }
+
+  .work-image-container {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .work-thumbnail {
+    width: 100%;
+    height: auto;
+    max-width: 400px;
+    aspect-ratio: 4/5;
+  }
+
+  .work-view-link {
+    align-self: flex-end;
+  }
+}

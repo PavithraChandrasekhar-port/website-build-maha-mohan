@@ -1,0 +1,32 @@
+{
+  "name": "Maha Mohan",
+  "introduction": "Maha Mohan is an experimental artist working at the intersection of digital and physical media. Their work explores themes of identity, technology, and the human experience in contemporary society. Through a combination of photography, digital manipulation, and interactive installations, Mohan creates immersive experiences that challenge viewers' perceptions of reality and representation.",
+  "socials": [
+    {
+      "platform": "Instagram",
+      "url": "https://instagram.com/mahamohan"
+    },
+    {
+      "platform": "Twitter",
+      "url": "https://twitter.com/mahamohan"
+    },
+    {
+      "platform": "LinkedIn",
+      "url": "https://linkedin.com/in/mahamohan"
+    }
+  ],
+  "artistStatement": {
+    "id": "statement-1",
+    "url": "/assets/files/artist-statement.pdf",
+    "filename": "artist-statement.pdf",
+    "mimeType": "application/pdf",
+    "size": 245760
+  },
+  "resume": {
+    "id": "resume-1",
+    "url": "/assets/files/resume.pdf",
+    "filename": "maha-mohan-resume.pdf",
+    "mimeType": "application/pdf",
+    "size": 189440
+  }
+}

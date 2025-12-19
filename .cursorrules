@@ -1,0 +1,309 @@
+# Maha Mohan - Artist Portfolio - Cursor Rules
+
+## Key Architectural Decisions
+
+### Tech Stack
+- **React 19** with TypeScript for type safety
+- **Vite** for fast development and optimized production builds
+- **Framer Motion (Motion.dev)** for UI animations and transitions
+- **React Router** for client-side routing with code splitting
+- **WebGL** (raw WebGL API) for lightweight shader-based effects only (no 3D models)
+- **Context API + useReducer** for global state (no Redux to keep bundle minimal)
+
+### Performance Strategy
+- Route-based code splitting with React.lazy() and Suspense
+- Lazy loading for images/videos using Intersection Observer
+- WebGL effects isolated in separate canvas components
+- Motion.dev animations use GPU-accelerated properties (transform, opacity)
+- Shader effects kept lightweight (minimal texture lookups, low precision)
+- Media assets served via CDN with responsive breakpoints
+
+### State Management
+- **MediaContext**: Tracks loaded/loading/failed images
+- **NavigationContext**: Manages route transitions and navigation state
+- **WebGLContext**: Tracks WebGL support and active canvas instances
+- All contexts use useReducer for predictable state updates
+
+### Animation Coordination
+- Motion.dev handles DOM animations (separate layer from WebGL)
+- WebGL runs in isolated canvas with its own RAF loop
+- Single RAF coordinator prevents conflicts between animation systems
+- Respects `prefers-reduced-motion` media query
+
+### CMS Integration Strategy
+- Data fetching abstracted in `utils/cms/` layer
+- Currently reads from JSON files in `src/data/`
+- Easy to switch to CMS API (Contentful, Strapi, Sanity) by updating `fetcher.ts`
+- Type-safe interfaces ensure consistency across mock and real data
+
+## File Structure Overview
+
+```
+src/
+├── components/
+│   ├── ui/              # Reusable UI components (ErrorBoundary, WebGLFallback)
+│   ├── animations/      # Motion.dev wrapped components (AnimatedPage, AnimatedContainer, AnimatedImage)
+│   ├── webgl/           # WebGL canvas components (ShaderCanvas)
+│   ├── media/           # Media components with lazy loading (LazyImage, LazyVideo)
+│   ├── navigation/      # Navigation components (WorksNavigation)
+│   └── works/           # Works gallery components (WorksGallery)
+├── pages/               # Route-level page components (HomePage, ProjectsPage, etc.)
+├── hooks/               # Custom React hooks
+│   ├── useWebGL.ts      # WebGL context and shader management
+│   ├── useMediaLoader.ts # Media preloading and lazy loading
+│   ├── useAnimation.ts  # Motion.dev animation helpers
+│   ├── useReducedMotion.ts # Detects prefers-reduced-motion
+│   ├── useScrollProgress.ts # Tracks scroll position
+│   └── usePerformance.ts # Performance monitoring
+├── shaders/             # GLSL shader files
+│   ├── vertex/          # Vertex shader files (.glsl)
+│   ├── fragment/        # Fragment shader files (.glsl)
+│   └── programs/        # Compiled shader program configs
+├── utils/               # Utility functions
+│   ├── webgl/           # WebGL utilities (context, shader compilation, buffers)
+│   ├── media/           # Image/video optimization utilities
+│   ├── cms/             # Data fetching abstraction layer
+│   ├── performance/     # Performance monitoring utilities
+│   └── config.ts        # Application configuration from env vars
+├── store/               # Global state (Context API + useReducer)
+│   ├── MediaContext.tsx
+│   ├── NavigationContext.tsx
+│   ├── WebGLContext.tsx
+│   └── index.tsx        # Combined AppProviders
+├── types/               # TypeScript interfaces
+│   ├── cms.ts           # CMS data models (Project, ArtistInfo, MediaItem)
+│   └── webgl.ts         # WebGL types (ShaderProgram, UniformValue, etc.)
+├── data/                # Mock JSON for prototyping
+│   ├── projects.json
+│   └── artist.json
+├── assets/              # Static assets
+│   ├── fonts/           # Custom font files (.woff2, .woff)
+│   ├── images/          # Image assets
+│   ├── videos/          # Video assets
+│   └── media/           # Project media
+│       └── Works/       # 14 project folders (folder name = work title)
+├── styles/              # CSS files
+│   ├── fonts.css        # @font-face declarations
+│   ├── landing.css      # Landing section styles
+│   ├── works.css        # Works gallery styles
+│   └── navigation.css   # Navigation styles
+└── routes/            # Route configuration
+    └── AppRoutes.tsx   # Route definitions with code splitting
+```
+
+## Important Class/ID Naming Conventions
+
+### Landing Section
+- `.landing-section` - Main landing container (fixed position)
+- `.landing-video` - Background video element
+- `.landing-overlay` - Overlay for blur/burgundy tint
+- `.landing-content` - Text content container
+- `.landing-name` - "Maha Mohan" heading (Ortica Linear font)
+- `.landing-subtitle` - "Artist, Architect, Writer." (Absans font)
+- `.landing-scroll-text` - "SCROLL TO BEGIN" text
+- `.landing-section.scrolled` - Applied when blur should activate
+
+### Works Gallery
+- `.works-gallery` - Main works container
+- `.works-gallery.active` - Applied when section is visible
+- `.works-container` - Container for all work items
+- `.work-item` - Individual work container
+- `.work-item.active` - Applied to work in viewport center
+- `.work-content` - Work item content wrapper
+- `.work-title-section` - Number + title container
+- `.work-number` - Work number (e.g., "1.")
+- `.work-title` - Work title text
+- `.work-image-container` - Image wrapper
+- `.work-thumbnail` - Work thumbnail image
+- `.work-view-link` - "View" link
+
+### Navigation
+- `.works-navigation` - Fixed left navigation
+- `.works-nav-label` - "/WORKS" label
+- `.works-nav-label.selected` - Selected state (larger, with "/")
+- `.works-nav-menu` - Navigation menu list
+- `.nav-link` - Navigation link (HOME)
+- `.nav-link.small` - Smaller navigation links (WORKS, EXHIBITS, etc.)
+
+### Animation Classes
+- Motion.dev components use `motion.*` elements
+- Animation variants defined in `hooks/useAnimation.ts`
+- Respect `prefers-reduced-motion` in all animations
+
+## Critical Dependencies and Their Purposes
+
+### Core Framework
+- **react** (^19.2.0) - UI framework
+- **react-dom** (^19.2.0) - React DOM renderer
+- **typescript** (^5.9.3) - Type safety and developer experience
+
+### Build & Development
+- **vite** (^7.2.4) - Build tool and dev server
+- **@vitejs/plugin-react** (^5.1.1) - React plugin for Vite
+- **@types/react** (^19.2.7) - TypeScript types for React
+- **@types/react-dom** (^19.2.3) - TypeScript types for React DOM
+- **@types/node** - TypeScript types for Node.js (for path resolution)
+
+### Routing
+- **react-router-dom** (^7.9.6) - Client-side routing with code splitting
+
+### Animations
+- **framer-motion** (^12.23.24) - UI animations and transitions (Motion.dev)
+
+### WebGL
+- **No external library** - Using raw WebGL API for lightweight shader effects only
+
+## Build & Deployment
+
+### Build Commands
+- **`npm run dev`** - Start development server on `http://localhost:3000` (auto-opens browser)
+- **`npm run build`** - Type check with TypeScript, then build for production (`tsc && vite build`)
+- **`npm run preview`** - Preview production build on `http://localhost:4173` (auto-opens browser)
+- **`npm run lint`** - Type check only (`tsc --noEmit`)
+
+### Build Process
+1. **Type Checking**: TypeScript compilation runs before build (`tsc`)
+2. **Vite Build**: Production-optimized bundle generation
+3. **Code Splitting**: Automatic route-based splitting + manual vendor chunks
+4. **Asset Optimization**: Images, videos, and fonts processed and hashed
+5. **Minification**: Terser with console/debugger removal
+6. **CSS Splitting**: Separate CSS chunks for better caching
+
+### Build Output Structure
+```
+dist/
+├── index.html
+├── assets/
+│   ├── js/
+│   │   ├── index-[hash].js          # Main entry
+│   │   ├── react-vendor-[hash].js   # React, ReactDOM, React Router
+│   │   ├── motion-vendor-[hash].js  # Framer Motion
+│   │   └── [route]-[hash].js        # Route chunks (lazy loaded)
+│   ├── css/
+│   │   └── [name]-[hash].css        # CSS chunks (code split)
+│   ├── images/
+│   │   └── [name]-[hash].[ext]      # Image assets (png, jpg, svg, etc.)
+│   ├── media/
+│   │   └── [name]-[hash].[ext]      # Video/audio assets (mp4, webm, etc.)
+│   └── [name]-[hash].[ext]          # Other assets (fonts, etc.)
+```
+
+### Code Splitting Strategy
+- **Manual Vendor Chunks** (defined in `vite.config.ts`):
+  - `react-vendor`: React, ReactDOM, React Router
+  - `motion-vendor`: Framer Motion
+- **Route-Based Splitting**: Automatic via `React.lazy()` and `Suspense`
+- **Chunk Size Warning**: Set to 1000KB (adjust if needed)
+
+### Asset Handling
+- **Images**: Processed to `assets/images/[name]-[hash][extname]`
+  - Supported: png, jpg, jpeg, svg, gif, tiff, bmp, ico
+- **Media**: Processed to `assets/media/[name]-[hash][extname]`
+  - Supported: mp4, webm, ogg, mp3, wav, flac, aac
+- **Shaders**: GLSL files included as raw assets (via `assetsInclude`)
+- **Fonts**: Processed to `assets/[name]-[hash][extname]`
+- **Other Assets**: Default to `assets/[name]-[hash][extname]`
+
+### Production Optimizations
+- **Minification**: Terser with aggressive compression
+  - `drop_console: true` - Removes all `console.*` calls
+  - `drop_debugger: true` - Removes `debugger` statements
+- **Source Maps**: Disabled in production (`sourcemap: false`)
+- **CSS Code Splitting**: Enabled for better caching
+- **Tree Shaking**: Automatic via Vite/Rollup
+
+### TypeScript Build Configuration
+- **Target**: ES2020
+- **Module**: ESNext
+- **Strict Mode**: Enabled (strict type checking)
+- **Path Alias**: `@/*` maps to `src/*` (configured in both `tsconfig.json` and `vite.config.ts`)
+- **No Emit**: TypeScript only type-checks, doesn't emit files (`noEmit: true`)
+
+### Development Server Configuration
+- **Port**: 3000 (configurable via `VITE_PORT` env var)
+- **Auto-Open**: Enabled
+- **CORS**: Enabled
+- **Hot Module Replacement**: Enabled (Vite default)
+
+### Preview Server Configuration
+- **Port**: 4173 (Vite default)
+- **Auto-Open**: Enabled
+- **Purpose**: Test production build locally before deployment
+
+### Environment Variables
+- **Prefix**: All env vars must use `VITE_` prefix to be exposed to client
+- **Access**: Use `import.meta.env.VITE_*` in code
+- **Build-Time**: Env vars are inlined at build time (not runtime)
+- **Example**: `VITE_CMS_API_URL`, `VITE_CDN_URL`, `VITE_ENABLE_WEBGL`
+
+### Build Requirements
+- **Node.js**: 18+ required
+- **Type Checking**: Must pass before build succeeds
+- **No Unused Code**: TypeScript enforces `noUnusedLocals` and `noUnusedParameters`
+
+### Deployment Considerations
+1. **Static Hosting**: Build outputs static files (compatible with Vercel, Netlify, GitHub Pages, etc.)
+2. **CDN**: Configure `VITE_CDN_URL` for asset serving
+3. **Base Path**: If deploying to subdirectory, configure `base` in `vite.config.ts`
+4. **SPA Routing**: Ensure server redirects all routes to `index.html` (for React Router)
+5. **Asset Caching**: Hashed filenames enable long-term caching
+6. **Font Loading**: Fonts must be accessible at build-time paths
+
+### Build Maintenance Rules
+- **Never commit `dist/` folder** - Add to `.gitignore`
+- **Always run `npm run lint` before committing** - Ensures type safety
+- **Test production build locally** - Use `npm run preview` before deploying
+- **Monitor bundle sizes** - Keep chunks under 1000KB warning limit
+- **Update dependencies carefully** - Test build after major version updates
+- **GLSL files must use `?raw` suffix** - Required for Vite to include as assets
+
+## Development Guidelines
+
+### Adding New Works
+1. Add folder to `src/assets/media/Works/` with work title as folder name
+2. Place cover image in folder (preferably named after the work)
+3. Import image in `WorksGallery.tsx`
+4. Add work object to `mockWorks` array
+
+### Adding Shaders
+1. Create `.glsl` file in `src/shaders/vertex/` or `src/shaders/fragment/`
+2. Import as string using `?raw` suffix: `import shader from '@/shaders/fragment/myShader.glsl?raw'`
+3. Use in `ShaderCanvas` component or `useWebGL` hook
+
+### Adding Animations
+1. Use Motion.dev `motion.*` components
+2. Define variants in `hooks/useAnimation.ts` if reusable
+3. Always check `useReducedMotion()` hook before animating
+4. Prefer `transform` and `opacity` for GPU acceleration
+
+### Media Handling
+1. Use `LazyImage` or `LazyVideo` components for media
+2. Provide responsive breakpoints via `widths` prop
+3. Images auto-optimize with `srcset` and `sizes`
+
+### State Management
+1. Use Context API for global state (Media, Navigation, WebGL)
+2. Keep component-level state local with `useState`
+3. Use `useReducer` for complex state logic
+
+### Performance
+1. Lazy load routes with `React.lazy()` and `Suspense`
+2. Use `React.memo` for expensive components (especially WebGL)
+3. Monitor performance with `usePerformance` hook in development
+4. Keep shader complexity low (minimize texture lookups, avoid nested loops)
+
+### CMS Integration (Future)
+1. Update `src/utils/cms/fetcher.ts` to call CMS API
+2. Keep data models in `types/cms.ts` unchanged
+3. Update `utils/cms/service.ts` if API structure differs
+4. Maintain backward compatibility with mock data during transition
+
+## Important Notes
+
+- **WebGL Support**: Always check `isWebGLSupported()` before rendering WebGL components
+- **Error Boundaries**: Wrap routes in `ErrorBoundary` component
+- **Font Loading**: Custom fonts loaded via `@font-face` in `styles/fonts.css`
+- **Asset Paths**: Use `@/` alias for imports from `src/` directory
+- **Environment Variables**: Access via `import.meta.env.VITE_*`
+- **Shader Files**: Must use `?raw` suffix when importing `.glsl` files
+
