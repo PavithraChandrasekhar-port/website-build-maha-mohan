@@ -24,7 +24,7 @@
 .loading-page-left {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: center; /* Center vertically */
   justify-content: center;
   padding: 2rem;
   border-right: 1px solid rgba(255, 255, 255, 0.1); /* Subtle vertical divider */
@@ -53,14 +53,14 @@
   max-height: 60vh;
   object-fit: contain;
   filter: brightness(1) contrast(1);
-  clip-path: inset(100% 0% 0% 0%); /* Start fully clipped (hidden from top) */
+  clip-path: inset(0% 0% 100% 0%); /* Start fully clipped from bottom (hidden from bottom) */
 }
 
-/* Center Column - Landing Name and Subtitle */
+/* Center Column - Landing Name Only (no subtitle) */
 .loading-page-center {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: center; /* Same positioning as home page */
   justify-content: center;
   padding: 2rem;
 }
@@ -79,17 +79,8 @@
   font-weight: 300;
   font-size: clamp(1rem, 5vw, 1.5rem);
   line-height: 1;
-  margin-bottom: 0.15rem;
+  margin-bottom: 0; /* No margin since no subtitle */
   letter-spacing: -0.02em;
-  color: #ffffff;
-}
-
-.loading-landing-subtitle {
-  font-family: 'Absans', sans-serif;
-  font-weight: 400;
-  font-size: clamp(0.5rem, 2vw, 1rem);
-  line-height: 1.5;
-  letter-spacing: 0.01em;
   color: #ffffff;
 }
 
@@ -97,8 +88,8 @@
 .loading-page-right {
   position: relative;
   display: flex;
-  align-items: flex-end;
-  justify-content: flex-end;
+  align-items: center; /* Center vertically to height of page */
+  justify-content: center; /* Center horizontally */
   padding: 2rem 3rem;
   border-left: 1px solid rgba(255, 255, 255, 0.1); /* Subtle vertical divider */
 }
@@ -106,7 +97,7 @@
 .loading-percentage {
   font-family: 'Absans', sans-serif;
   font-weight: 400;
-  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  font-size: clamp(0.75rem, 1.5vw, 1rem); /* Minimal font size */
   color: #ffffff;
   letter-spacing: 0.02em;
   line-height: 1;

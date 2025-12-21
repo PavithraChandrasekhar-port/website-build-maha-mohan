@@ -11,30 +11,53 @@ import backArrowIcon from '@/icons/Back arrow.svg';
 import '@/styles/work-detail.css';
 
 export default function WorkDetailPage() {
+  // ============================================================================
+  // CRITICAL: ALL HOOKS MUST BE AT THE TOP LEVEL
+  // Rules of Hooks:
+  // 1. Only call hooks at the top level
+  // 2. Don't call hooks inside loops, conditions, or nested functions
+  // 3. Always use hooks at the top level, before any early returns
+  // 4. Only call hooks from React function components or custom hooks
+  // ============================================================================
+  
+  // 1. Router hooks (must be first)
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // 2. Custom hooks
+  const prefersReducedMotion = useReducedMotion();
+  
+  // 3. State hooks - all useState calls grouped together
   const [work, setWork] = useState<ReturnType<typeof getWorkById> | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeMediaIndex, setActiveMediaIndex] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [scrollAccumulator, setScrollAccumulator] = useState(0);
   const [backgroundMedia, setBackgroundMedia] = useState<{ id: string; type: 'image' | 'video'; url: string; alt?: string } | null>(null);
   const [transitionComplete, setTransitionComplete] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const backgroundImageRef = useRef<HTMLImageElement | null>(null);
-  const backgroundVideoRef = useRef<HTMLVideoElement | null>(null);
   const [backgroundImageLoaded, setBackgroundImageLoaded] = useState(false);
-  const firstImageRef = useRef<HTMLImageElement | null>(null);
-  const firstImageContainerRef = useRef<HTMLDivElement | null>(null);
   const [sourceImageElement, setSourceImageElement] = useState<HTMLImageElement | null>(null);
   const [targetImageElement, setTargetImageElement] = useState<HTMLImageElement | null>(null);
   const [transitionProgress, setTransitionProgress] = useState(0);
   const [morphComplete, setMorphComplete] = useState(false); // MUST be false initially - Phase 1 must run first!
   const [morphTarget, setMorphTarget] = useState<{ centerX: number; centerY: number; targetWidth: number; targetHeight: number } | null>(null);
-  const prefersReducedMotion = useReducedMotion();
   
-  // Get transition data from location state
+  // 4. Ref hooks - all useRef calls grouped together
+  const containerRef = useRef<HTMLDivElement>(null);
+  const backgroundImageRef = useRef<HTMLImageElement | null>(null);
+  const backgroundVideoRef = useRef<HTMLVideoElement | null>(null);
+  const firstImageRef = useRef<HTMLImageElement | null>(null);
+  const firstImageContainerRef = useRef<HTMLDivElement | null>(null);
+  const morphTargetCalculatedRef = useRef<string | null>(null);
+  const transitionIdRef = useRef<string | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  const isAnimatingRef = useRef(false);
+  const animationStartedRef = useRef(false);
+  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sourceImageRef = useRef<HTMLImageElement | null>(null);
+  const targetImageRef = useRef<HTMLImageElement | null>(null);
+  
+  // 5. Get transition data from location state (not a hook, but needed early)
   const transitionData = location.state?.transition as {
     type: string;
     sourceRect: { x: number; y: number; width: number; height: number };
@@ -44,15 +67,21 @@ export default function WorkDetailPage() {
 
 
   // Load work data and select random background media
+  // Load synchronously - no loading state needed
   useEffect(() => {
     if (!id) {
-      setLoading(false);
       return;
     }
     
     try {
+      console.log('🔍 Loading work data for ID:', id);
       const data = getWorkById(id);
       if (data) {
+        console.log('✅ Work data loaded:', {
+          id: data.id,
+          name: data.name,
+          mediaCount: data.media.length,
+        });
         // If we have transition data with a thumbnail, find it in media and set as first
         if (transitionData?.sourceImage && data.media.length > 0) {
           // Extract filename from thumbnail URL for better matching
@@ -140,60 +169,12 @@ export default function WorkDetailPage() {
         }
       }
     } catch (error) {
-      console.error('Failed to load work:', error);
-    } finally {
-      setLoading(false);
+      console.error('❌ Failed to load work:', error);
+      console.error('Work ID:', id);
+      console.error('Error details:', error instanceof Error ? error.message : String(error));
+      console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
     }
   }, [id, transitionData]);
-
-  // Track if morph target has been calculated to prevent infinite loops
-  const morphTargetCalculatedRef = useRef<string | null>(null);
-  const transitionIdRef = useRef<string | null>(null);
-  
-  // Calculate morph target dimensions - called from image onLoad callback
-  const calculateMorphTarget = useCallback(() => {
-    // Create a unique ID for this transition
-    const currentTransitionId = transitionData ? `${id}-${transitionData.sourceImage}` : null;
-    
-    // Only calculate once per transition
-    if (morphTargetCalculatedRef.current === currentTransitionId) {
-      return;
-    }
-    
-    if (!transitionData || !firstImageRef.current) {
-      return;
-    }
-    
-    const img = firstImageRef.current;
-    
-    // Get the ACTUAL rendered image dimensions (not container)
-    const imgRect = img.getBoundingClientRect();
-    
-    // Use actual rendered dimensions - the image element already has correct size from CSS
-    const displayedWidth = imgRect.width;
-    const displayedHeight = imgRect.height;
-    
-    if (displayedWidth === 0 || displayedHeight === 0) {
-      return; // Image not rendered yet
-    }
-    
-    // Calculate center position from actual image position
-    const centerX = imgRect.left + displayedWidth / 2;
-    const centerY = imgRect.top + displayedHeight / 2;
-
-    // Set morph target for transition - use actual rendered image size
-    const target = {
-      centerX,
-      centerY,
-      targetWidth: displayedWidth,
-      targetHeight: displayedHeight,
-    };
-    
-    // Mark as calculated BEFORE setting state to prevent re-triggering
-    morphTargetCalculatedRef.current = currentTransitionId;
-    transitionIdRef.current = currentTransitionId;
-    setMorphTarget(target);
-  }, [transitionData, id]);
   
   // Reset calculation flag when transition data changes
   useEffect(() => {
@@ -207,15 +188,23 @@ export default function WorkDetailPage() {
   }, [transitionData, id]);
 
   // Load source image (thumbnail) for transition
+  // Phase 1.3: Image loading verification
   useEffect(() => {
     if (transitionData?.sourceImage) {
       const img = new Image();
       img.src = transitionData.sourceImage;
       img.crossOrigin = 'anonymous';
       img.onload = () => {
+        console.log('🖼️ Source image loaded:', {
+          src: img.src,
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          complete: img.complete,
+        });
         setSourceImageElement(img);
       };
       img.onerror = () => {
+        console.error('❌ Source image failed to load:', transitionData.sourceImage);
         setSourceImageElement(null);
       };
     } else {
@@ -223,14 +212,27 @@ export default function WorkDetailPage() {
     }
   }, [transitionData?.sourceImage]);
 
-  // Start Perlin noise transition after morph completes + 0.3s pause
-  const animationFrameRef = useRef<number | null>(null);
-  const isAnimatingRef = useRef(false);
-  const animationStartedRef = useRef(false);
-  const pauseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const sourceImageRef = useRef<HTMLImageElement | null>(null);
-  const targetImageRef = useRef<HTMLImageElement | null>(null);
-  
+  // Phase 1.3: Target image loading verification
+  useEffect(() => {
+    if (targetImageElement) {
+      console.log('🖼️ Target image loaded:', {
+        src: targetImageElement.src,
+        width: targetImageElement.naturalWidth,
+        height: targetImageElement.naturalHeight,
+        complete: targetImageElement.complete,
+      });
+      
+      // Verify images are different
+      if (sourceImageElement && targetImageElement) {
+        const areDifferent = sourceImageElement.src !== targetImageElement.src;
+        console.log('🔍 Images are different:', areDifferent);
+        if (!areDifferent) {
+          console.warn('⚠️ Source and target images are the same!');
+        }
+      }
+    }
+  }, [targetImageElement, sourceImageElement]);
+
   // Store image elements in refs to avoid dependency issues
   useEffect(() => {
     sourceImageRef.current = sourceImageElement;
@@ -411,51 +413,51 @@ export default function WorkDetailPage() {
     };
   }, [work, activeMediaIndex, isTransitioning, scrollAccumulator]);
 
-  // Constants - memoized to prevent recalculation
-  const IMAGE_SPACING = 100; // 100vh spacing between images
-  const CENTER_OFFSET = 50; // Center of viewport (50vh from top)
+  // 6. useCallback hooks - all grouped together
+  // Calculate morph target dimensions - called from image onLoad callback
+  const calculateMorphTarget = useCallback(() => {
+    // Create a unique ID for this transition
+    const currentTransitionId = transitionData ? `${id}-${transitionData.sourceImage}` : null;
+    
+    // Only calculate once per transition
+    if (morphTargetCalculatedRef.current === currentTransitionId) {
+      return;
+    }
+    
+    if (!transitionData || !firstImageRef.current) {
+      return;
+    }
+    
+    const img = firstImageRef.current;
+    
+    // Get the ACTUAL rendered image dimensions (not container)
+    const imgRect = img.getBoundingClientRect();
+    
+    // Use actual rendered dimensions - the image element already has correct size from CSS
+    const displayedWidth = imgRect.width;
+    const displayedHeight = imgRect.height;
+    
+    if (displayedWidth === 0 || displayedHeight === 0) {
+      return; // Image not rendered yet
+    }
+    
+    // Calculate center position from actual image position
+    const centerX = imgRect.left + displayedWidth / 2;
+    const centerY = imgRect.top + displayedHeight / 2;
 
-  // Memoize translateY calculation for performance
-  // Must be called before conditional returns to follow Rules of Hooks
-  const translateY = useMemo(() => {
-    return -(activeMediaIndex * IMAGE_SPACING + CENTER_OFFSET);
-  }, [activeMediaIndex]);
-
-
-  // Memoize image style calculations for performance
-  // Must be called before conditional returns to follow Rules of Hooks
-  const imageStyles = useMemo(() => {
-    if (!work?.media) return [];
-    return work.media.map((_, index) => {
-      const distanceFromCenter = Math.abs(index - activeMediaIndex);
-      
-      if (distanceFromCenter === 0) {
-        return { opacity: 1, scale: 1 };
-      } else if (distanceFromCenter === 1) {
-        return { opacity: 0.3, scale: 0.85 };
-      } else {
-        return { opacity: 0, scale: 0.85 };
-      }
-    });
-  }, [work?.media, activeMediaIndex]);
-
-
-  if (loading) {
-    return (
-      <div className="work-detail-loading">
-        <p>Loading...</p>
-      </div>
-    );
-  }
-
-  if (!work) {
-    return (
-      <div className="work-detail-error">
-        <h1>Work not found</h1>
-        <Link to="/">Return to Home</Link>
-      </div>
-    );
-  }
+    // Set morph target for transition - use actual rendered image size
+    const target = {
+      centerX,
+      centerY,
+      targetWidth: displayedWidth,
+      targetHeight: displayedHeight,
+    };
+    
+    // Mark as calculated BEFORE setting state to prevent re-triggering
+    morphTargetCalculatedRef.current = currentTransitionId;
+    transitionIdRef.current = currentTransitionId;
+    setMorphTarget(target);
+  }, [transitionData, id]);
 
   // Handle back button click - navigate to home and scroll to works section
   const handleBackClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -471,6 +473,54 @@ export default function WorkDetailPage() {
       });
     }, 100);
   }, [navigate]);
+
+  // 7. useMemo hooks - all grouped together
+  // Constants for calculations
+  const IMAGE_SPACING = 100; // 100vh spacing between images
+  const CENTER_OFFSET = 50; // Center of viewport (50vh from top)
+
+  // Memoize translateY calculation for performance
+  const translateY = useMemo(() => {
+    return -(activeMediaIndex * IMAGE_SPACING + CENTER_OFFSET);
+  }, [activeMediaIndex]);
+
+  // Split work and media to ensure stable hook execution order
+  // This prevents React from detecting changes in hook order
+  // CRITICAL: Always call useMemo with same dependencies structure
+  const workMedia = work?.media ?? null;
+  const workMediaLength = workMedia?.length ?? 0;
+  
+  // ALWAYS call useMemo - never conditionally skip it
+  // Split the condition check to ensure hook is always called
+  const imageStyles = useMemo(() => {
+    // Early return inside useMemo is OK - the hook itself is always called
+    if (!workMedia || workMediaLength === 0) {
+      return [];
+    }
+    return workMedia.map((_, index) => {
+      const distanceFromCenter = Math.abs(index - activeMediaIndex);
+      
+      if (distanceFromCenter === 0) {
+        return { opacity: 1, scale: 1 };
+      } else if (distanceFromCenter === 1) {
+        return { opacity: 0.3, scale: 0.85 };
+      } else {
+        return { opacity: 0, scale: 0.85 };
+      }
+    });
+  }, [workMedia, workMediaLength, activeMediaIndex]); // Stable dependencies
+
+  // ============================================================================
+  // ALL HOOKS COMPLETE - Now component logic and render
+  // ============================================================================
+
+  // #region agent log
+  fetch('http://127.0.0.1:7242/ingest/1acbd97f-c512-4a91-abe9-1f4a4f189617',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'WorkDetailPage.tsx:458',message:'Before conditional returns',data:{hasWork:!!work,hasTransitionData:!!transitionData,hookCount:'all-hooks-called'},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+  // #endregion
+  
+  // CRITICAL: Always render the component to allow transitions to show
+  // Only show error AFTER transitions complete (if work is still null)
+  // This ensures morph + Perlin transitions run smoothly without interruption
 
   return (
     <div className="work-detail-page" ref={containerRef}>
@@ -608,7 +658,26 @@ export default function WorkDetailPage() {
           transition: transitionData && !transitionComplete ? 'opacity 0.3s ease-out' : 'none',
         }}
       >
-        {backgroundMedia && (transitionComplete || !transitionData) && (
+        {/* Show error only after transition completes (if work is still null) */}
+        {!work && (transitionComplete || !transitionData) && (
+          <div className="work-detail-error" style={{ 
+            position: 'fixed',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            zIndex: 100,
+            textAlign: 'center',
+            color: 'white',
+            padding: '2rem',
+            backgroundColor: 'rgba(58, 24, 43, 0.9)',
+            borderRadius: '8px'
+          }}>
+            <h1>Work not found</h1>
+            <Link to="/" onClick={handleBackClick} style={{ color: 'white', textDecoration: 'underline' }}>Return to Home</Link>
+          </div>
+        )}
+        
+        {backgroundMedia && (transitionComplete || !transitionData) && work && (
           <div
             className="work-detail-background work-detail-background-active"
             style={{ opacity: 1 }}
@@ -694,40 +763,43 @@ export default function WorkDetailPage() {
       </Link>
 
       {/* Left panel - Metadata - Only text fades during transition */}
-      <div 
-        className="work-detail-left-panel"
-        style={{ 
-          opacity: transitionComplete || !transitionData ? 1 : 0, // Text fades during transition
-          zIndex: transitionData && !transitionComplete ? 11 : 2,
-          transition: transitionData && !transitionComplete ? 'opacity 0.3s ease-out' : 'none',
-        }}
-      >
-        <div className="work-detail-info">
-          <h1 className="work-detail-title">{work?.name || ''}</h1>
-          <p className="work-detail-info-item">{work?.medium || ''}</p>
-          <p className="work-detail-info-item">{work?.dimensions || ''}</p>
-          <p className="work-detail-info-item">{work?.year || ''}</p>
-        </div>
-      </div>
-
-      {/* Center area - Vertical carousel with all images - Only fades during transition */}
-      <div 
-        className="work-detail-center"
-        style={{ 
-          opacity: transitionComplete || !transitionData ? 1 : 0, // Content fades during transition
-          zIndex: transitionData && !transitionComplete ? 11 : 1,
-          transition: transitionData && !transitionComplete ? 'opacity 0.3s ease-out' : 'none',
-        }}
-      >
+      {work && (
         <div 
-          className="work-detail-carousel-container"
-          style={{
-            transform: `translate3d(0, ${translateY}vh, 0)`, // Use translate3d for GPU acceleration
-            transition: prefersReducedMotion ? 'none' : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-            willChange: 'transform',
+          className="work-detail-left-panel"
+          style={{ 
+            opacity: transitionComplete || !transitionData ? 1 : 0, // Text fades during transition
+            zIndex: transitionData && !transitionComplete ? 11 : 2,
+            transition: transitionData && !transitionComplete ? 'opacity 0.3s ease-out' : 'none',
           }}
         >
-          {work?.media.map((mediaItem, index) => {
+          <div className="work-detail-info">
+            <h1 className="work-detail-title">{work.name}</h1>
+            <p className="work-detail-info-item">{work.medium}</p>
+            <p className="work-detail-info-item">{work.dimensions}</p>
+            <p className="work-detail-info-item">{work.year}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Center area - Vertical carousel with all images - Only fades during transition */}
+      {work && (
+        <div 
+          className="work-detail-center"
+          style={{ 
+            opacity: transitionComplete || !transitionData ? 1 : 0, // Content fades during transition
+            zIndex: transitionData && !transitionComplete ? 11 : 1,
+            transition: transitionData && !transitionComplete ? 'opacity 0.3s ease-out' : 'none',
+          }}
+        >
+          <div 
+            className="work-detail-carousel-container"
+            style={{
+              transform: `translate3d(0, ${translateY}vh, 0)`, // Use translate3d for GPU acceleration
+              transition: prefersReducedMotion ? 'none' : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+              willChange: 'transform',
+            }}
+          >
+            {workMedia && workMedia.map((mediaItem, index) => {
             const style = imageStyles[index] || { opacity: 0, scale: 0.85 };
             const isActive = index === activeMediaIndex;
             const isFirstImage = index === 0;
@@ -799,26 +871,28 @@ export default function WorkDetailPage() {
               </div>
             );
           })}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Right panel - Writings - scrolls with carousel - Only text fades during transition */}
-      <div 
-        className="work-detail-right-panel"
-        style={{ 
-          opacity: transitionComplete || !transitionData ? 1 : 0, // Text fades during transition
-          zIndex: transitionData && !transitionComplete ? 11 : 2,
-          transition: transitionData && !transitionComplete ? 'opacity 0.3s ease-out' : 'none',
-        }}
-      >
+      {work && (
         <div 
-          className="work-detail-writings-container"
-          style={{
-            transform: `translateY(${translateY}vh)`,
-            transition: prefersReducedMotion ? 'none' : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+          className="work-detail-right-panel"
+          style={{ 
+            opacity: transitionComplete || !transitionData ? 1 : 0, // Text fades during transition
+            zIndex: transitionData && !transitionComplete ? 11 : 2,
+            transition: transitionData && !transitionComplete ? 'opacity 0.3s ease-out' : 'none',
           }}
         >
-          {work?.media.map((mediaItem, index) => {
+          <div 
+            className="work-detail-writings-container"
+            style={{
+              transform: `translateY(${translateY}vh)`,
+              transition: prefersReducedMotion ? 'none' : 'transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            {workMedia && workMedia.map((mediaItem, index) => {
             const style = imageStyles[index] || { opacity: 0, scale: 0.85 };
             const writings = mediaItem.writings;
             
@@ -852,8 +926,9 @@ export default function WorkDetailPage() {
               </div>
             );
           })}
+          </div>
         </div>
-      </div>
+      )}
 
     </div>
   );

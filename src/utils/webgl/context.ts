@@ -46,6 +46,10 @@ export function setCanvasSize(
   }
 }
 
+// Track active WebGL contexts to prevent too many
+let activeContextCount = 0;
+const MAX_CONTEXTS = 16; // Browser limit is usually 16
+
 export function isWebGLSupported(): boolean {
   try {
     const canvas = document.createElement('canvas');
@@ -53,5 +57,16 @@ export function isWebGLSupported(): boolean {
   } catch {
     return false;
   }
+}
+
+export function trackContextCreated(): void {
+  activeContextCount++;
+  if (activeContextCount > MAX_CONTEXTS) {
+    console.warn(`WARNING: Too many active WebGL contexts (${activeContextCount}). Oldest context will be lost.`);
+  }
+}
+
+export function trackContextDestroyed(): void {
+  activeContextCount = Math.max(0, activeContextCount - 1);
 }
 

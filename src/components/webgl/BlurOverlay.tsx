@@ -1,6 +1,6 @@
 import { useEffect, useRef, useCallback, memo } from 'react';
 import { createTexture, disposeTexture, disposeBuffer } from '@/utils/webgl/buffer';
-import { isWebGLSupported } from '@/utils/webgl/context';
+import { isWebGLSupported, trackContextCreated, trackContextDestroyed } from '@/utils/webgl/context';
 import { createShaderProgram } from '@/utils/webgl/shader';
 import vertexShader from '@/shaders/vertex/passthrough.glsl?raw';
 import blurShader from '@/shaders/fragment/blur.glsl?raw';
@@ -47,32 +47,42 @@ function BlurOverlay({
       return () => {};
     }
     
-    // Try to get existing context first (if canvas was reused)
-    let gl = canvas.getContext('webgl', { 
+    // Check if canvas already has a context (from previous mount)
+    // Note: getContext returns null if context was lost, so we need to check differently
+    try {
+      // Try to get existing context without creating a new one
+      const testCanvas = document.createElement('canvas');
+      const testContext = testCanvas.getContext('webgl');
+      if (testContext) {
+        // WebGL is supported, now check if our canvas has an existing context
+        // We can't directly check, but we can try to lose it if it exists
+        const extension = testContext.getExtension('WEBGL_lose_context');
+        if (extension) {
+          // This is a workaround - we'll lose any existing context on cleanup
+        }
+      }
+    } catch (e) {
+      // Context might already be lost, which is fine
+    }
+    
+    // Create new context - browser will handle context limits
+    const gl = canvas.getContext('webgl', { 
       alpha: true,
       premultipliedAlpha: false,
-      preserveDrawingBuffer: false
+      preserveDrawingBuffer: false,
+      failIfMajorPerformanceCaveat: false
     }) as WebGLRenderingContext | null;
-
-    // If context already exists, use it
-    if (!gl) {
-      // Try to get context without losing existing one
-      gl = canvas.getContext('webgl', { 
-        alpha: true,
-        premultipliedAlpha: false,
-        preserveDrawingBuffer: false,
-        failIfMajorPerformanceCaveat: false
-      }) as WebGLRenderingContext | null;
-    }
 
     if (!gl) {
       return () => {};
     }
 
     glRef.current = gl;
+    trackContextCreated();
 
     // Set canvas size
     const resizeCanvas = () => {
+      if (!canvasRef.current || !glRef.current) return;
       const dpr = window.devicePixelRatio || 1;
       canvas.width = canvas.clientWidth * dpr;
       canvas.height = canvas.clientHeight * dpr;
@@ -80,11 +90,14 @@ function BlurOverlay({
     };
     resizeCanvas();
     window.addEventListener('resize', resizeCanvas);
+    resizeHandlerRef.current = resizeCanvas;
 
     // Create shader program
     const program = createShaderProgram(gl, vertexShader, blurShader);
     if (!program) {
       console.error('Failed to create shader program');
+      window.removeEventListener('resize', resizeCanvas);
+      resizeHandlerRef.current = null;
       return () => {};
     }
 
@@ -147,7 +160,10 @@ function BlurOverlay({
     gl.clearColor(0, 0, 0, 0);
 
     return () => {
-      window.removeEventListener('resize', resizeCanvas);
+      if (resizeHandlerRef.current) {
+        window.removeEventListener('resize', resizeHandlerRef.current);
+        resizeHandlerRef.current = null;
+      }
     };
   }, []); // Empty deps - only initialize once
 
@@ -246,6 +262,7 @@ function BlurOverlay({
   // Initialize WebGL only once - use ref to track initialization
   const isInitializedRef = useRef(false);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const resizeHandlerRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     // Only initialize if not already initialized
@@ -259,15 +276,68 @@ function BlurOverlay({
       cleanupRef.current = null;
     }
     
+    // Clean up any existing resize handler
+    if (resizeHandlerRef.current) {
+      window.removeEventListener('resize', resizeHandlerRef.current);
+      resizeHandlerRef.current = null;
+    }
+    
     const cleanup = initWebGL();
     cleanupRef.current = cleanup;
     isInitializedRef.current = true;
     
     return () => {
+      // Cancel any pending animation frames
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+      
+      // Clean up WebGL resources
+      if (glRef.current) {
+        const gl = glRef.current;
+        
+        // Clean up resources
+        if (textureRef.current) {
+          disposeTexture(gl, textureRef.current);
+          textureRef.current = null;
+        }
+        if (positionBufferRef.current) {
+          disposeBuffer(gl, positionBufferRef.current);
+          positionBufferRef.current = null;
+        }
+        if (texCoordBufferRef.current) {
+          disposeBuffer(gl, texCoordBufferRef.current);
+          texCoordBufferRef.current = null;
+        }
+        if (programRef.current) {
+          gl.deleteProgram(programRef.current);
+          programRef.current = null;
+        }
+        
+        // Lose the WebGL context explicitly
+        const canvas = canvasRef.current;
+        if (canvas) {
+          const extension = gl.getExtension('WEBGL_lose_context');
+          if (extension) {
+            extension.loseContext();
+          }
+        }
+        
+        trackContextDestroyed();
+        glRef.current = null;
+      }
+      
+      // Clean up resize handler
       if (cleanupRef.current) {
         cleanupRef.current();
         cleanupRef.current = null;
       }
+      if (resizeHandlerRef.current) {
+        window.removeEventListener('resize', resizeHandlerRef.current);
+        resizeHandlerRef.current = null;
+      }
+      
       isInitializedRef.current = false;
     };
   }, []); // Only initialize once on mount
@@ -332,50 +402,6 @@ function BlurOverlay({
     };
   }, [render, videoElement, imageElement, blurIntensity, blurRadius, burgundyIntensity]);
 
-  // Cleanup - properly lose WebGL context
-  useEffect(() => {
-    return () => {
-      // Cancel any pending animation frames
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-      
-      // Clean up WebGL resources
-      if (glRef.current) {
-        const gl = glRef.current;
-        
-        // Clean up resources
-        if (textureRef.current) {
-          disposeTexture(gl, textureRef.current);
-          textureRef.current = null;
-        }
-        if (positionBufferRef.current) {
-          disposeBuffer(gl, positionBufferRef.current);
-          positionBufferRef.current = null;
-        }
-        if (texCoordBufferRef.current) {
-          disposeBuffer(gl, texCoordBufferRef.current);
-          texCoordBufferRef.current = null;
-        }
-        if (programRef.current) {
-          gl.deleteProgram(programRef.current);
-          programRef.current = null;
-        }
-        
-        // Lose the WebGL context explicitly
-        const canvas = canvasRef.current;
-        if (canvas) {
-          const extension = gl.getExtension('WEBGL_lose_context');
-          if (extension) {
-            extension.loseContext();
-          }
-        }
-        
-        glRef.current = null;
-      }
-    };
-  }, []);
 
   if (!isWebGLSupported()) {
     return null;

@@ -30,10 +30,36 @@ export const LazyImage = forwardRef<HTMLImageElement, LazyImageProps>(({
   onLoad: onLoadProp,
   ...props
 }, forwardedRef) => {
+  // CRITICAL: All hooks must be at the top level, called unconditionally
+  // Hooks must be called in the same order on every render
+  
+  // 1. Custom hooks
   const [lazyRef, isIntersecting] = useLazyLoad<HTMLImageElement>();
+  const prefersReducedMotion = useReducedMotion();
+  
+  // 2. State hooks
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
   
+  // 3. Effect hooks
+  useEffect(() => {
+    // Check condition inside the hook, not before calling it
+    if (!src || src.trim() === '') {
+      return;
+    }
+    
+    if (isIntersecting && !isLoaded && !hasError) {
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        setIsLoaded(true);
+        onLoadProp?.();
+      };
+      img.onerror = () => setHasError(true);
+    }
+  }, [isIntersecting, src, isLoaded, hasError, onLoadProp]);
+  
+  // All hooks are now at the top - rest of component logic below
   // Combine refs
   const ref = (node: HTMLImageElement | null) => {
     if (typeof forwardedRef === 'function') {
@@ -47,36 +73,21 @@ export const LazyImage = forwardRef<HTMLImageElement, LazyImageProps>(({
     }
   };
 
-  // Don't render if src is empty
-  if (!src || src.trim() === '') {
-    return null;
-  }
-
-  const finalSrcSet = responsive && !srcset && widths
+  // Calculate values after hooks (conditions moved inside hooks)
+  const hasValidSrc = src && src.trim() !== '';
+  const finalSrcSet = hasValidSrc && responsive && !srcset && widths
     ? generateSrcSet(src, widths)
     : srcset;
 
-  const finalSizes = responsive && !sizes
+  const finalSizes = hasValidSrc && responsive && !sizes
     ? generateSizes()
     : sizes;
 
-  useEffect(() => {
-    if (isIntersecting && !isLoaded && !hasError) {
-      const img = new Image();
-      img.src = src;
-      img.onload = () => {
-        setIsLoaded(true);
-        onLoadProp?.();
-      };
-      img.onerror = () => setHasError(true);
-    }
-  }, [isIntersecting, src, isLoaded, hasError, onLoadProp]);
-
   const shouldLoad = isIntersecting || isLoaded;
-  const displaySrc = shouldLoad ? src : (placeholder || src);
+  const displaySrc = shouldLoad && hasValidSrc ? src : (hasValidSrc ? (placeholder || src) : null);
 
-  // Don't render if displaySrc is empty
-  if (!displaySrc || displaySrc.trim() === '') {
+  // Render null if no valid src (but hooks were still called)
+  if (!hasValidSrc || !displaySrc || displaySrc.trim() === '') {
     return null;
   }
 
@@ -90,8 +101,6 @@ export const LazyImage = forwardRef<HTMLImageElement, LazyImageProps>(({
       />
     );
   }
-
-  const prefersReducedMotion = useReducedMotion();
 
   return (
     <motion.img

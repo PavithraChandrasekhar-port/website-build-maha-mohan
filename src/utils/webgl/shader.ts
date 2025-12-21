@@ -32,7 +32,11 @@ export function compileShader(
 
   if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
     const error = gl.getShaderInfoLog(shader);
-    console.error(`Shader compilation error: ${error}`);
+    const shaderType = type === gl.VERTEX_SHADER ? 'vertex' : 'fragment';
+    console.error(`Shader compilation error (${shaderType}):`, error || 'Unknown error');
+    if (error) {
+      console.error('Shader source:', source.substring(0, 200) + '...');
+    }
     gl.deleteShader(shader);
     return null;
   }

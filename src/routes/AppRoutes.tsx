@@ -1,52 +1,20 @@
 import { Suspense, lazy } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { AnimatedPage } from '@/components/animations/AnimatedPage';
-import LoadingPage from '@/components/ui/LoadingPage';
 
 // Lazy load pages for code splitting
 const HomePage = lazy(() => import('@/pages/HomePage'));
 const ProjectsPage = lazy(() => import('@/pages/ProjectsPage'));
 const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage'));
-const WorkDetailPage = lazy(() => import('@/pages/WorkDetailPage'));
+// Preload WorkDetailPage to avoid Suspense fallback interrupting transitions
+import WorkDetailPage from '@/pages/WorkDetailPage';
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
 const Playground = lazy(() => import('@/playground'));
 
-// Loading fallback component - use our custom LoadingPage during code splitting
+// Loading fallback component - null for WorkDetailPage route to avoid interrupting transitions
+// Only show loader for other lazy-loaded pages
 function PageLoader() {
-  try {
-    return (
-      <div style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        width: '100vw', 
-        height: '100vh', 
-        zIndex: 99999,
-        backgroundColor: '#561D3C'
-      }}>
-        <LoadingPage progress={50} />
-      </div>
-    );
-  } catch (error) {
-    console.error('[PageLoader] Error rendering LoadingPage:', error);
-    return (
-      <div style={{ 
-        position: 'fixed', 
-        top: 0, 
-        left: 0, 
-        width: '100vw', 
-        height: '100vh', 
-        zIndex: 99999,
-        backgroundColor: '#561D3C',
-        color: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-        <p>Error loading LoadingPage component</p>
-      </div>
-    );
-  }
+  return null; // No loading indicator - let transitions handle the visual flow
 }
 
 function AppRoutes() {

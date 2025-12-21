@@ -41,6 +41,7 @@ export default defineConfig({
   assetsInclude: ["**/*.glsl"],
   server: {
     port: 3002,
+    host: 'localhost', // Use localhost instead of 127.0.0.1
     open: true,
     cors: true,
   },

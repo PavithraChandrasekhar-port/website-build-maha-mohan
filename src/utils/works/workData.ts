@@ -554,7 +554,19 @@ const workData: Record<string, WorkDetail> = {
  * Get work detail by ID
  */
 export function getWorkById(id: string): WorkDetail | null {
-  return workData[id] || null;
+  if (!id) {
+    console.warn('⚠️ getWorkById called with empty ID');
+    return null;
+  }
+  
+  const work = workData[id];
+  if (!work) {
+    console.warn('⚠️ Work not found for ID:', id);
+    console.log('Available work IDs:', Object.keys(workData));
+    return null;
+  }
+  
+  return work;
 }
 
 /**
