@@ -1,7 +1,6 @@
 import { useEffect, useRef, useCallback, memo, useState } from 'react';
 import { createTexture, disposeTexture, disposeBuffer } from '@/utils/webgl/buffer';
 import { isWebGLSupported } from '@/utils/webgl/context';
-import { createShaderProgram } from '@/utils/webgl/shader';
 import vertexShader from '@/shaders/vertex/passthrough.glsl?raw';
 import transitionShader from '@/shaders/fragment/perlin-transition.glsl?raw';
 

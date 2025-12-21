@@ -46,6 +46,16 @@ jobs:
           VITE_BASE_PATH: ${{ steps.base_path.outputs.base_path }}
         run: npm run build
 
+      - name: Verify .nojekyll exists in dist
+        run: |
+          if [ -f dist/.nojekyll ]; then
+            echo "✅ .nojekyll found in dist/"
+          else
+            echo "⚠️ .nojekyll not found, creating it..."
+            touch dist/.nojekyll
+            echo "✅ Created .nojekyll in dist/"
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
         with:
