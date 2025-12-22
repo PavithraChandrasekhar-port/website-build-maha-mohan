@@ -2,76 +2,66 @@
   "exhibits": [
     {
       "id": "001",
-      "title": "Echoes of Longing",
-      "venue": "Gallery One",
-      "location": "Chennai, India",
-      "year": "2024",
-      "image": "/media/Works/Echoes of Longing/EOL.jpg",
-      "status": "ongoing"
-    },
-    {
-      "id": "002",
-      "title": "The Paradox of Becoming",
-      "venue": "Contemporary Arts Center",
-      "location": "Mumbai, India",
-      "year": "2024",
-      "image": "/media/Works/The Paradox of Becoming/The Paradox of Becoming.jpeg",
-      "status": "ongoing"
-    },
-    {
-      "id": "003",
-      "title": "Of Webs and Whispers",
-      "venue": "National Gallery of Modern Art",
-      "location": "New Delhi, India",
-      "year": "2023",
-      "image": "/media/Works/Of Webs and Whispers/Of Webs and Whisper Interface 01.jpg",
+      "title": "Absence takes form",
+      "venue": "Wasserman Projects",
+      "location": "Detroit, MI",
+      "year": "2026",
+      "image": "",
       "status": "upcoming"
     },
     {
+      "id": "002",
+      "title": "RISD Grad Show",
+      "venue": "Rhode Island Convention Center",
+      "location": "Providence, RI",
+      "year": "2025",
+      "image": "",
+      "status": "upcoming"
+    },
+    {
+      "id": "003",
+      "title": "As She Should",
+      "venue": "The Gallery at Selva",
+      "location": "Brooklyn NYC",
+      "year": "2025",
+      "image": "",
+      "status": "ongoing"
+    },
+    {
       "id": "004",
-      "title": "Alchemy",
-      "venue": "Tate Modern",
-      "location": "London, UK",
-      "year": "2023",
-      "image": "/media/Works/Alchemy/Divine Comedy/Divine Comedy.jpg",
+      "title": "Placeholder Exhibit 4",
+      "venue": "TBD",
+      "location": "TBD",
+      "year": "2025",
+      "image": "",
       "status": "upcoming"
     },
     {
       "id": "005",
-      "title": "Ethereal Bodies",
-      "venue": "Gagosian Gallery",
-      "location": "New York, USA",
-      "year": "2024",
-      "image": "/media/Works/Ethereal Bodies/Ethereal Bodies.jpg",
-      "status": "ongoing"
+      "title": "Placeholder Exhibit 5",
+      "venue": "TBD",
+      "location": "TBD",
+      "year": "2025",
+      "image": "",
+      "status": "upcoming"
     },
     {
       "id": "006",
-      "title": "Iraivi",
-      "venue": "Serpentine Galleries",
-      "location": "London, UK",
-      "year": "2024",
-      "image": "/media/Works/Iraivi/Iraivi.jpg",
+      "title": "Placeholder Exhibit 6",
+      "venue": "TBD",
+      "location": "TBD",
+      "year": "2025",
+      "image": "",
       "status": "upcoming"
     },
     {
       "id": "007",
-      "title": "Melancholy",
-      "venue": "White Cube",
-      "location": "London, UK",
-      "year": "2023",
-      "image": "/media/Works/Melancholy/01.jpg",
-      "status": "ongoing"
-    },
-    {
-      "id": "008",
-      "title": "Voiceless Despair",
-      "venue": "Hauser & Wirth",
-      "location": "Zurich, Switzerland",
-      "year": "2024",
-      "image": "/media/Works/Voiceless Despair/Voiceless Despair.jpg",
+      "title": "Placeholder Exhibit 7",
+      "venue": "TBD",
+      "location": "TBD",
+      "year": "2025",
+      "image": "",
       "status": "upcoming"
     }
   ]
 }
-

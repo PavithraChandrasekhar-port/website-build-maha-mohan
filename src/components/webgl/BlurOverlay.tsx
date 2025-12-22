@@ -425,14 +425,16 @@ function BlurOverlay({
 }
 
 // Memoize to prevent unnecessary remounts on scroll
+// Only re-render if critical props change
 export default memo(BlurOverlay, (prevProps, nextProps) => {
-  // Only re-render if critical props change
-  return (
-    prevProps.videoElement === nextProps.videoElement &&
-    prevProps.imageElement === nextProps.imageElement &&
-    prevProps.blurIntensity === nextProps.blurIntensity &&
-    prevProps.blurRadius === nextProps.blurRadius &&
-    prevProps.burgundyIntensity === nextProps.burgundyIntensity
-  );
+  // Re-render if any critical prop changes
+  if (prevProps.videoElement !== nextProps.videoElement) return false;
+  if (prevProps.imageElement !== nextProps.imageElement) return false;
+  if (prevProps.blurIntensity !== nextProps.blurIntensity) return false;
+  if (prevProps.blurRadius !== nextProps.blurRadius) return false;
+  if (prevProps.burgundyIntensity !== nextProps.burgundyIntensity) return false;
+  if (prevProps.className !== nextProps.className) return false;
+  // Props are equal, don't re-render
+  return true;
 });
 

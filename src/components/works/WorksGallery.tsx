@@ -32,6 +32,7 @@ interface Work {
 interface WorksGalleryProps {
   isActive: boolean;
   onWorksCountChange?: (count: number) => void; // Callback to pass works count to parent
+  onLastWorkActive?: (isActive: boolean, workPosition: number) => void; // Callback when last work is active
 }
 
 // Real works data from assets/media/Works folders
@@ -137,7 +138,7 @@ const mockWorks: Work[] = [
 ];
 
 const WorksGallery = forwardRef<HTMLElement, WorksGalleryProps>(
-  ({ isActive, onWorksCountChange }, ref) => {
+  ({ isActive, onWorksCountChange, onLastWorkActive }, ref) => {
   const navigate = useNavigate();
   const galleryRef = useRef<HTMLDivElement>(null);
   const workRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -243,6 +244,23 @@ const WorksGallery = forwardRef<HTMLElement, WorksGalleryProps>(
       setActiveIndex(0); // Project 1 (Alchemy)
     }
   }, [isActive, activeIndex]);
+
+  // Notify parent when last work is active and calculate its position
+  useEffect(() => {
+    const lastWorkIndex = mockWorks.length - 1; // Index 13 (Whisper)
+    if (activeIndex === lastWorkIndex && onLastWorkActive && workRefs.current[lastWorkIndex]) {
+      const lastWorkRef = workRefs.current[lastWorkIndex];
+      if (lastWorkRef) {
+        const rect = lastWorkRef.getBoundingClientRect();
+        const workCenterY = rect.top + rect.height / 2;
+        const scrollY = window.scrollY;
+        const workCenterPosition = workCenterY + scrollY;
+        onLastWorkActive(true, workCenterPosition);
+      }
+    } else if (onLastWorkActive) {
+      onLastWorkActive(false, 0);
+    }
+  }, [activeIndex, onLastWorkActive]);
 
   const handleWorkClick = (workId: string, e: React.MouseEvent, workIndex: number) => {
     // Prevent navigation if clicking on the "view" link (it has its own Link)

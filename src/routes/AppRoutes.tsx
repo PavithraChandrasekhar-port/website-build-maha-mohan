@@ -9,6 +9,7 @@ const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage'));
 // Preload WorkDetailPage to avoid Suspense fallback interrupting transitions
 import WorkDetailPage from '@/pages/WorkDetailPage';
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
+const ExhibitsPage = lazy(() => import('@/pages/ExhibitsPage'));
 const Playground = lazy(() => import('@/playground'));
 
 // Loading fallback component - null for WorkDetailPage route to avoid interrupting transitions
@@ -62,6 +63,14 @@ function AppRoutes() {
           element={
             <AnimatedPage>
               <AboutPage />
+            </AnimatedPage>
+          }
+        />
+        <Route
+          path="/exhibits"
+          element={
+            <AnimatedPage>
+              <ExhibitsPage />
             </AnimatedPage>
           }
         />

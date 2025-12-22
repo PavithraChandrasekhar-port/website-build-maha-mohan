@@ -4,7 +4,9 @@ import '@/styles/navigation.css';
 
 interface WorksNavigationProps {
   isVisible: boolean;
-  activeSection?: 'home' | 'works'; // Active section based on scroll
+  activeSection?: 'home' | 'works' | 'exhibits'; // Active section based on scroll
+  worksEndPosition?: number; // Works section end position for scrolling
+  lastWorkCenterPosition?: number; // Last work item center position for scrolling to exhibits
 }
 
 interface NavItem {
@@ -21,7 +23,7 @@ const navItems: NavItem[] = [
   { path: '/about', label: 'ABOUT' },
 ];
 
-export default function WorksNavigation({ isVisible, activeSection }: WorksNavigationProps) {
+export default function WorksNavigation({ isVisible, activeSection, worksEndPosition = 0, lastWorkCenterPosition = 0 }: WorksNavigationProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
@@ -38,6 +40,7 @@ export default function WorksNavigation({ isVisible, activeSection }: WorksNavig
     if (isHomePage && activeSection) {
       if (activeSection === 'home') return '/';
       if (activeSection === 'works') return '/works';
+      if (activeSection === 'exhibits') return '/exhibits';
     }
     // On home page, if works section is visible but no activeSection provided, WORKS is active (fallback)
     if (isHomePage && isVisible && !activeSection) {
@@ -82,6 +85,47 @@ export default function WorksNavigation({ isVisible, activeSection }: WorksNavig
           top: worksStartPosition,
           behavior: 'smooth'
         });
+      } else if (item.path === '/exhibits') {
+        // Scroll to exhibits section (past last work item center)
+        const viewportHeight = window.innerHeight;
+        let targetPosition: number;
+        
+        if (lastWorkCenterPosition > 0) {
+          // Use actual last work center position
+          const delayThreshold = viewportHeight * 0.1; // 10vh delay
+          const blurRange = viewportHeight * 0.3; // Blur range
+          const exhibitsStart = delayThreshold + (blurRange * 0.3); // Exhibits start position
+          targetPosition = lastWorkCenterPosition + exhibitsStart;
+        } else if (worksEndPosition > 0) {
+          // Fallback to works end position if last work position not available
+          const delayThreshold = viewportHeight * 0.1;
+          targetPosition = worksEndPosition + delayThreshold;
+        } else {
+          // Final fallback estimate
+          const worksStartPosition = viewportHeight;
+          const worksEstimatedEnd = worksStartPosition + (viewportHeight * 3); // 300vh
+          targetPosition = worksEstimatedEnd + (viewportHeight * 0.2);
+        }
+        
+        const scrollToExhibits = () => {
+          window.scrollTo({
+            top: targetPosition,
+            behavior: 'smooth'
+          });
+          
+          // Trigger scroll events after smooth scroll to update active section
+          setTimeout(() => {
+            window.dispatchEvent(new Event('scroll'));
+          }, 100);
+          setTimeout(() => {
+            window.dispatchEvent(new Event('scroll'));
+          }, 500);
+          setTimeout(() => {
+            window.dispatchEvent(new Event('scroll'));
+          }, 1000);
+        };
+        
+        scrollToExhibits();
       } else {
         // For other routes, navigate normally
         navigate(item.path);

@@ -1,0 +1,238 @@
+/* About Page Styles */
+
+.about-page {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: #4A2C3A; /* Dark muted purple/plum background */
+  overflow: hidden;
+  z-index: 1;
+}
+
+.about-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: rgba(255, 255, 255, 0.8);
+  font-family: 'Absans', sans-serif;
+}
+
+/* Toggle Button - Circular + icon in bottom center */
+.about-toggle-button {
+  position: fixed;
+  bottom: 4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 1);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.about-toggle-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.about-toggle-icon {
+  font-size: 2rem;
+  font-weight: 300;
+  color: #000;
+  line-height: 1;
+  transition: transform 0.3s ease;
+  font-family: 'Absans', sans-serif;
+}
+
+.about-toggle-icon.open {
+  font-size: 2.5rem;
+  font-weight: 200;
+}
+
+/* Info Panel - Bottom right */
+.about-info-panel {
+  position: fixed;
+  bottom: 4rem;
+  right: 4rem;
+  width: 400px;
+  max-width: calc(100vw - 8rem);
+  background: transparent;
+  border: none;
+  padding: 2rem;
+  z-index: 101;
+}
+
+/* Close Button - Top right of panel */
+.about-close-button {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 102;
+}
+
+.about-close-button:hover {
+  background: rgba(0, 0, 0, 0.2);
+  border-color: rgba(0, 0, 0, 0.3);
+}
+
+.about-close-button span {
+  font-size: 1.5rem;
+  font-weight: 300;
+  color: #000;
+  line-height: 1;
+  font-family: 'Absans', sans-serif;
+}
+
+/* Info Content */
+.about-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.about-info-heading {
+  font-family: 'Absans', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+  padding: 0;
+}
+
+.about-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.about-intro {
+  font-family: 'Absans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 1);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.about-description {
+  font-family: 'Absans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 1);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Links */
+.about-info-links {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  margin-top: 0.5rem;
+}
+
+.about-link {
+  font-family: 'Absans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 1);
+  text-decoration: none;
+  transition: opacity 0.3s ease;
+  position: relative;
+}
+
+.about-link:hover {
+  opacity: 0.7;
+}
+
+.about-link::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: rgba(255, 255, 255, 1);
+  transition: width 0.3s ease;
+}
+
+.about-link:hover::after {
+  width: 100%;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .about-info-panel {
+    right: 2rem;
+    bottom: 2rem;
+    width: 350px;
+    max-width: calc(100vw - 4rem);
+  }
+
+  .about-toggle-button {
+    bottom: 2rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .about-info-panel {
+    right: 1rem;
+    bottom: 1rem;
+    width: calc(100vw - 2rem);
+    max-width: calc(100vw - 2rem);
+    padding: 1.5rem;
+  }
+
+  .about-toggle-button {
+    bottom: 1.5rem;
+    width: 50px;
+    height: 50px;
+  }
+
+  .about-toggle-icon {
+    font-size: 1.5rem;
+  }
+
+  .about-toggle-icon.open {
+    font-size: 2rem;
+  }
+
+  .about-info-heading {
+    font-size: 0.75rem;
+  }
+
+  .about-intro,
+  .about-description {
+    font-size: 0.25rem;
+  }
+
+  .about-info-links {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .about-link {
+    font-size: 0.625rem;
+  }
+}
+

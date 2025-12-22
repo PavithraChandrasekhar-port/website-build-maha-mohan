@@ -1,0 +1,236 @@
+/* Exhibits Section Styles */
+
+.exhibits-section {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 5; /* Above blur overlay (z-index: 4) */
+  /* opacity controlled by Motion.dev */
+  pointer-events: none;
+}
+
+.exhibits-section.visible {
+  pointer-events: auto;
+}
+
+.exhibits-blur-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 4; /* Above works section (z-index: 3), below exhibits content (z-index: 5) */
+  pointer-events: none;
+}
+
+.exhibits-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  padding-left: 200px; /* Space for navigation */
+  padding-right: 2rem;
+  padding-top: 4rem;
+  padding-bottom: 4rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  overflow: hidden;
+}
+
+.exhibits-title {
+  font-family: 'Absans', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 3rem;
+  white-space: nowrap;
+}
+
+.exhibits-scroll-container {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 2rem;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+  /* Hide scrollbar but keep functionality */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.exhibits-scroll-container::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.exhibit-card {
+  flex-shrink: 0;
+  /* Calculate width to fit 3.5 cards: (100vw - left padding - right padding - 3 gaps) / 3.5 */
+  width: calc((100vw - 200px - 3rem - 96px) / 4.5);
+  max-width: 400px; /* Prevent cards from getting too large on very wide screens */
+  min-width: 280px; /* Prevent cards from getting too small */
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  cursor: pointer;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.exhibit-card:hover {
+  transform: translateY(-4px);
+  opacity: 0.9;
+}
+
+.exhibit-label {
+  font-family: 'Absans', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.02em;
+}
+
+.exhibit-image-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  background: rgba(86, 29, 60, 0.3); /* Burgundy tint background */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.exhibit-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.exhibit-image-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #561D3C; /* Solid burgundy background */
+  opacity: 0; /* Fully transparent */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0;
+}
+
+.exhibit-image-placeholder::before {
+  content: '';
+  width: 60px;
+  height: 60px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+}
+
+.exhibit-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-family: 'Absans', sans-serif;
+  color: rgba(255, 255, 255, 1);
+}
+
+.exhibit-title {
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+.exhibit-venue {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.01em;
+}
+
+.exhibit-location {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.01em;
+}
+
+.exhibit-year {
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
+  letter-spacing: 0.01em;
+}
+
+.exhibit-next-button {
+  margin-top: 1.5rem;
+  padding: 0.75rem 1.5rem;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  font-family: 'Absans', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 0.02em;
+}
+
+.exhibit-next-button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 1);
+  transform: translateX(4px);
+}
+
+.exhibit-next-button:active {
+  transform: translateX(2px);
+}
+
+@media (max-width: 1024px) {
+  .exhibits-container {
+    padding-left: 150px;
+  }
+
+  .exhibit-card {
+    width: 350px;
+  }
+}
+
+@media (max-width: 768px) {
+  .exhibits-container {
+    padding-left: 0;
+    padding-right: 1rem;
+    padding-top: 2rem;
+  }
+
+  .exhibits-title {
+    font-size: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .exhibit-card {
+    /* On mobile, show fewer cards or adjust as needed */
+    width: calc((100vw - 1rem - 64px) / 2.5);
+    max-width: 300px;
+    min-width: 200px;
+  }
+
+  .exhibit-title {
+    font-size: 0.875rem;
+  }
+
+  .exhibit-venue,
+  .exhibit-location,
+  .exhibit-year {
+    font-size: 0.75rem;
+  }
+}
+
