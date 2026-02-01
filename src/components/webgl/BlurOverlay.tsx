@@ -35,7 +35,7 @@ function BlurOverlay({
   const positionLocationRef = useRef<number>(-1);
   const texCoordLocationRef = useRef<number>(-1);
   const [webglFailed, setWebglFailed] = useState(false);
-  const [tooManyContexts, setTooManyContexts] = useState(false);
+  const [, setTooManyContexts] = useState(false);
   const [hasAttemptedRestore, setHasAttemptedRestore] = useState(false);
   const [restoreCount, setRestoreCount] = useState(0); // Increment when restore succeeds so render effect re-runs
   const restoreAttemptRef = useRef(false); // Prevent multiple restore attempts

@@ -19,9 +19,9 @@ const ANIMATION_DURATION = 0.5; // seconds
 
 export default function ExhibitsSectionScrollHijack({ 
   isVisible = false, 
-  scrollProgress = 0,
-  exhibitsStartPosition = 0,
-  onExhibitsEndPosition
+  scrollProgress: _scrollProgress = 0,
+  exhibitsStartPosition: _exhibitsStartPosition = 0,
+  onExhibitsEndPosition: _onExhibitsEndPosition
 }: ExhibitsSectionScrollHijackProps) {
   const prefersReducedMotion = useReducedMotion();
   const [exhibits, setExhibits] = useState<Exhibit[]>([]);
@@ -375,21 +375,16 @@ export default function ExhibitsSectionScrollHijack({
               key={startIndex}
               className="exhibits-grid"
               custom={direction}
-              initial={prefersReducedMotion || !direction ? false : (dir) => ({ 
-                x: dir === 'left' ? 300 : -300 
-              })}
+              initial={prefersReducedMotion || !direction ? undefined : direction === 'left' ? { x: 300 } : { x: -300 }}
               animate={{ x: 0 }}
-              exit={prefersReducedMotion || !direction ? false : (dir) => ({ 
-                x: dir === 'left' ? -300 : 300 
-              })}
+              exit={prefersReducedMotion || !direction ? undefined : direction === 'left' ? { x: -300 } : { x: 300 }}
               transition={{ 
                 duration: prefersReducedMotion ? 0 : ANIMATION_DURATION,
                 ease: [0.4, 0, 0.2, 1]
               }}
             >
-            {visibleCards.map((exhibit, gridIndex) => {
+            {visibleCards.map((exhibit) => {
               const imageElement = loadedImages[exhibit.id];
-              const actualIndex = startIndex + gridIndex;
               const hoverImages = loadedImageArrays[exhibit.id] || [];
               const currentHoverIndex = hoverImageIndex[exhibit.id] || 0;
               const isHovered = hoveredExhibitId === exhibit.id;
