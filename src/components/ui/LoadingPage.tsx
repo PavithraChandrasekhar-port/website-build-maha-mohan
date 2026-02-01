@@ -4,8 +4,6 @@ import { useReducedMotion } from '@/hooks/useReducedMotion';
 import marapachiSvg from '@/assets/media/Other/Marapachi.svg';
 import '@/styles/loading.css';
 
-// Debug: Log when component renders
-console.log('LoadingPage rendered, SVG:', marapachiSvg);
 
 interface LoadingPageProps {
   progress: number; // 0-100

@@ -4,7 +4,14 @@ import path from "path";
 
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || "/",
-  plugins: [react()],
+  plugins: [
+    react({
+      // Don't fail on TypeScript errors during dev - let HMR work
+      typescript: {
+        ignoreBuildErrors: false, // Still check in build
+      },
+    }),
+  ],
   publicDir: "public",
   resolve: {
     alias: {
@@ -40,10 +47,25 @@ export default defineConfig({
   },
   assetsInclude: ["**/*.glsl"],
   server: {
-    port: 3002,
-    host: 'localhost', // Use localhost instead of 127.0.0.1
+    port: 5173, // Changed to 5173 (Vite default) to avoid conflicts
+    host: 'localhost',
     open: true,
     cors: true,
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      'Last-Modified': new Date().toUTCString(),
+    },
+    hmr: {
+      overlay: true,
+      protocol: 'ws',
+      host: 'localhost',
+    },
+    // Force full page reload on changes to ensure cache is cleared
+    watch: {
+      usePolling: false,
+    },
   },
   preview: {
     port: 4173,

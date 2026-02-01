@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, forwardRef } from 'react';
 import { motion } from 'framer-motion';
 import { Link, useNavigate } from 'react-router-dom';
+import { LazyImage } from '@/components/media/LazyImage';
 import { selectPortraitImage } from '@/utils/media/portraitSelector';
 import { getWorkById } from '@/utils/works/workData';
 import '@/styles/works.css';
@@ -245,19 +246,56 @@ const WorksGallery = forwardRef<HTMLElement, WorksGalleryProps>(
     }
   }, [isActive, activeIndex]);
 
+  // Track last values to prevent unnecessary callback calls
+  const lastActiveIndexRef = useRef<number | null>(null);
+  const lastPositionRef = useRef<number>(0);
+
   // Notify parent when last work is active and calculate its position
   useEffect(() => {
     const lastWorkIndex = mockWorks.length - 1; // Index 13 (Whisper)
-    if (activeIndex === lastWorkIndex && onLastWorkActive && workRefs.current[lastWorkIndex]) {
+    const isLastWorkActive = activeIndex === lastWorkIndex;
+    const wasLastWorkActive = lastActiveIndexRef.current === lastWorkIndex;
+    
+    // Only proceed if state actually changed
+    if (isLastWorkActive === wasLastWorkActive && isLastWorkActive) {
+      // Still active - check if position changed significantly
+      if (workRefs.current[lastWorkIndex]) {
+        const lastWorkRef = workRefs.current[lastWorkIndex];
+        if (lastWorkRef) {
+          const rect = lastWorkRef.getBoundingClientRect();
+          const workCenterY = rect.top + rect.height / 2;
+          const scrollY = window.scrollY;
+          const workCenterPosition = workCenterY + scrollY;
+          
+          // Only call callback if position changed significantly (avoid micro-updates)
+          if (Math.abs(workCenterPosition - lastPositionRef.current) > 5) {
+            lastPositionRef.current = workCenterPosition;
+            if (onLastWorkActive) {
+              onLastWorkActive(true, workCenterPosition);
+            }
+          }
+        }
+      }
+      return; // No state change, skip
+    }
+    
+    // State changed - update accordingly
+    if (isLastWorkActive && onLastWorkActive && workRefs.current[lastWorkIndex]) {
       const lastWorkRef = workRefs.current[lastWorkIndex];
       if (lastWorkRef) {
         const rect = lastWorkRef.getBoundingClientRect();
         const workCenterY = rect.top + rect.height / 2;
         const scrollY = window.scrollY;
         const workCenterPosition = workCenterY + scrollY;
+        
+        lastActiveIndexRef.current = lastWorkIndex;
+        lastPositionRef.current = workCenterPosition;
         onLastWorkActive(true, workCenterPosition);
       }
-    } else if (onLastWorkActive) {
+    } else if (onLastWorkActive && wasLastWorkActive) {
+      // Was active, now not active
+      lastActiveIndexRef.current = null;
+      lastPositionRef.current = 0;
       onLastWorkActive(false, 0);
     }
   }, [activeIndex, onLastWorkActive]);
@@ -335,15 +373,19 @@ const WorksGallery = forwardRef<HTMLElement, WorksGalleryProps>(
               
               <div className="work-image-container">
                 {index === activeIndex && (
-                  <motion.img 
-                  src={portraitThumbnails[work.id] || work.thumbnail || work.image} 
-                  alt={work.title}
-                  loading="lazy"
-                  className="work-thumbnail"
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ duration: 0.4, ease: 'easeOut' }}
-                />
+                  >
+                    <LazyImage
+                      src={portraitThumbnails[work.id] || work.thumbnail || work.image}
+                      alt={work.title}
+                      responsive
+                      widths={[250, 320, 480, 640]}
+                      className="work-thumbnail"
+                    />
+                  </motion.div>
                 )}
               </div>
               

@@ -10,6 +10,7 @@ const ProjectDetailPage = lazy(() => import('@/pages/ProjectDetailPage'));
 import WorkDetailPage from '@/pages/WorkDetailPage';
 const AboutPage = lazy(() => import('@/pages/AboutPage'));
 const ExhibitsPage = lazy(() => import('@/pages/ExhibitsPage'));
+const PrintedMatterPage = lazy(() => import('@/pages/PrintedMatterPage'));
 const Playground = lazy(() => import('@/playground'));
 
 // Loading fallback component - null for WorkDetailPage route to avoid interrupting transitions
@@ -71,6 +72,14 @@ function AppRoutes() {
           element={
             <AnimatedPage>
               <ExhibitsPage />
+            </AnimatedPage>
+          }
+        />
+        <Route
+          path="/printed-matter"
+          element={
+            <AnimatedPage>
+              <PrintedMatterPage />
             </AnimatedPage>
           }
         />

@@ -54,6 +54,8 @@ export interface Exhibit {
   venue: string;
   location: string;
   year: string;
-  image: string;
+  image: string; // Keep for backward compatibility - primary image
+  images?: string[]; // Array of image URLs for hover cycling
   status: 'ongoing' | 'upcoming';
 }
+

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, memo } from 'react';
+import { useEffect, useRef, useCallback, memo, useState } from 'react';
 import { createTexture, disposeTexture, disposeBuffer } from '@/utils/webgl/buffer';
 import { isWebGLSupported, trackContextCreated, trackContextDestroyed } from '@/utils/webgl/context';
 import { createShaderProgram } from '@/utils/webgl/shader';
@@ -34,6 +34,11 @@ function BlurOverlay({
   const uniformsRef = useRef<Record<string, WebGLUniformLocation | null>>({});
   const positionLocationRef = useRef<number>(-1);
   const texCoordLocationRef = useRef<number>(-1);
+  const [webglFailed, setWebglFailed] = useState(false);
+  const [tooManyContexts, setTooManyContexts] = useState(false);
+  const [hasAttemptedRestore, setHasAttemptedRestore] = useState(false);
+  const [restoreCount, setRestoreCount] = useState(0); // Increment when restore succeeds so render effect re-runs
+  const restoreAttemptRef = useRef(false); // Prevent multiple restore attempts
 
   const initWebGL = useCallback(() => {
     if (!canvasRef.current || !isWebGLSupported()) {
@@ -74,11 +79,41 @@ function BlurOverlay({
     }) as WebGLRenderingContext | null;
 
     if (!gl) {
+      // Check if WebGL is supported but context creation failed (likely too many contexts)
+      if (isWebGLSupported()) {
+        console.warn('WebGL context creation failed - likely too many contexts');
+        setTooManyContexts(true);
+        // Only set failed if we've attempted restore, otherwise try restore first
+        if (hasAttemptedRestore) {
+          setWebglFailed(true);
+        } else {
+          // Try restore before giving up (only if not already attempted)
+          if (!hasAttemptedRestore) {
+            setTimeout(() => attemptWebGLRestore(), 100);
+          } else {
+            setWebglFailed(true);
+          }
+        }
+      }
+      return () => {};
+    }
+
+    // Check if context is already lost
+    if (gl.isContextLost()) {
+      console.warn('WebGL context is lost during initialization');
+      if (hasAttemptedRestore) {
+        setWebglFailed(true);
+      } else {
+        // Will be handled by context lost event listener
+      }
       return () => {};
     }
 
     glRef.current = gl;
     trackContextCreated();
+    setWebglFailed(false); // Reset failed state on successful init
+    setHasAttemptedRestore(false); // Reset restore attempt flag on successful init
+    restoreAttemptRef.current = false; // Reset restore attempt ref
 
     // Set canvas size
     const resizeCanvas = () => {
@@ -166,6 +201,64 @@ function BlurOverlay({
       }
     };
   }, []); // Empty deps - only initialize once
+
+  // Attempt to restore/remount WebGL context (defined after initWebGL)
+  const attemptWebGLRestore = useCallback(() => {
+    if (restoreAttemptRef.current || !canvasRef.current || hasAttemptedRestore) {
+      return;
+    }
+    
+    restoreAttemptRef.current = true;
+    console.log('Attempting WebGL context restoration...');
+    
+    // Clean up existing context references
+    if (glRef.current) {
+      try {
+        const extension = glRef.current.getExtension('WEBGL_lose_context');
+        if (extension) {
+          extension.loseContext();
+        }
+      } catch (e) {
+        // Ignore errors during cleanup
+      }
+      glRef.current = null;
+      trackContextDestroyed();
+    }
+    
+    // Clear refs
+    programRef.current = null;
+    textureRef.current = null;
+    positionBufferRef.current = null;
+    texCoordBufferRef.current = null;
+    
+    // Cancel any ongoing animation frames
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
+    
+    // Wait a bit then try to reinitialize
+    setTimeout(() => {
+      restoreAttemptRef.current = false;
+      setHasAttemptedRestore(true);
+      
+      // Try to reinitialize WebGL
+      initWebGL();
+      
+      // Check if restoration was successful (check after a brief delay to allow init)
+      setTimeout(() => {
+        if (glRef.current && !glRef.current.isContextLost() && programRef.current) {
+          console.log('WebGL context restored successfully');
+          setWebglFailed(false);
+          setHasAttemptedRestore(false); // Allow future restore attempts
+          setRestoreCount((c) => c + 1); // Re-run render effect to restart blur loop
+        } else {
+          console.warn('WebGL context restoration failed - using solid color fallback');
+          setWebglFailed(true);
+        }
+      }, 100);
+    }, 200);
+  }, [hasAttemptedRestore, initWebGL]);
 
   const render = useCallback(() => {
     const mediaElement = videoElement || imageElement;
@@ -400,27 +493,93 @@ function BlurOverlay({
         animationFrameRef.current = null;
       }
     };
-  }, [render, videoElement, imageElement, blurIntensity, blurRadius, burgundyIntensity]);
+  }, [render, videoElement, imageElement, blurIntensity, blurRadius, burgundyIntensity, restoreCount]);
 
 
+  // Handle WebGL context lost/restored events
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
+    const handleContextLost = (e: Event) => {
+      e.preventDefault(); // Prevent default behavior
+      console.warn('WebGL context lost');
+      
+      // Check if it's due to too many contexts
+      const errorEvent = e as any;
+      if (errorEvent.statusMessage && errorEvent.statusMessage.includes('context')) {
+        setTooManyContexts(true);
+      }
+      
+      // Try to restore before falling back to solid color
+      if (!hasAttemptedRestore && !restoreAttemptRef.current) {
+        attemptWebGLRestore();
+      } else {
+        // Already attempted restore or in progress - use solid fallback
+        setWebglFailed(true);
+      }
+    };
+    
+    const handleContextRestored = () => {
+      console.log('WebGL context restored by browser');
+      setWebglFailed(false);
+      setHasAttemptedRestore(false);
+      restoreAttemptRef.current = false;
+      // Reinitialize if needed
+      if (!glRef.current && canvasRef.current) {
+        initWebGL();
+      }
+    };
+    
+    canvas.addEventListener('webglcontextlost', handleContextLost);
+    canvas.addEventListener('webglcontextrestored', handleContextRestored);
+    
+    return () => {
+      canvas.removeEventListener('webglcontextlost', handleContextLost);
+      canvas.removeEventListener('webglcontextrestored', handleContextRestored);
+    };
+  }, [hasAttemptedRestore, attemptWebGLRestore]);
+
+  // If WebGL is not supported at all, return null (no fallback)
   if (!isWebGLSupported()) {
     return null;
   }
 
+  // Always render the canvas so it stays mounted - required for restore to re-init WebGL.
+  // When context is lost and restore failed, overlay the burgundy fallback on top.
+  const showFallbackOverlay = webglFailed && hasAttemptedRestore;
+
   return (
-    <canvas
-      ref={canvasRef}
-      className={className}
-      style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        pointerEvents: 'none',
-        ...style,
-      }}
-    />
+    <>
+      <canvas
+        ref={canvasRef}
+        className={className}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          pointerEvents: 'none',
+          ...style,
+        }}
+      />
+      {showFallbackOverlay && (
+        <div
+          className={className}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            backgroundColor: '#561D3C', // Burgundy fallback
+            ...style,
+          }}
+        />
+      )}
+    </>
   );
 }
 

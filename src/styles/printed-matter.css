@@ -1,0 +1,269 @@
+/* Printed Matter Section Styles - Asymmetrical Layout */
+
+.printed-matter-section {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 6; /* Above exhibits (z-index: 5) so it appears after exhibits scrolls out */
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.printed-matter-blur-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 5; /* Same as exhibits blur, below printed matter content (z-index: 6) */
+  pointer-events: none;
+}
+
+.printed-matter-section.visible {
+  pointer-events: auto;
+}
+
+.printed-matter-container {
+  position: relative;
+  width: 100vw; /* Full viewport width */
+  height: 100vh; /* Full viewport height for proper centering */
+  padding: 0; /* No padding - full page */
+  overflow: visible; /* Allow images to go slightly outside */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.printed-matter-heading-container {
+  position: fixed; /* Fixed to viewport for true page centering */
+  top: 50vh; /* Center to viewport height */
+  left: 50vw; /* Center to viewport width */
+  transform: translate(-50%, -50%); /* Center the element */
+  z-index: 10; /* Above images */
+  pointer-events: none;
+  text-align: center;
+  width: auto; /* Auto width for proper centering */
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem; /* Reduced gap between title and subtitle */
+}
+
+.printed-matter-heading {
+  font-family: 'Absans', sans-serif;
+  font-size: 1rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 1);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.printed-matter-subtitle {
+  font-family: 'Aujournuit', sans-serif;
+  font-size: 0.9rem; /* Changed to 0.9rem */
+  font-weight: 400;
+  color: rgba(255, 255, 255, 1);
+  text-transform: none;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  margin: 0;
+}
+
+.printed-matter-grid {
+  position: relative;
+  width: 100%;
+  height: 150vh; /* Extended height for layout, but container is 100vh for centering */
+  min-height: 150vh;
+  overflow: visible; /* Allow images to extend slightly outside */
+}
+
+.printed-matter-item {
+  position: absolute;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border-radius: 2px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(2px);
+  pointer-events: auto; /* Ensure clicks work */
+  z-index: 5; /* Above background, below heading */
+}
+
+.printed-matter-item:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.printed-matter-item img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  transition: opacity 0.3s ease;
+}
+
+.printed-matter-item:hover img {
+  opacity: 0.95;
+}
+
+/* Modal/Lightbox Styles */
+.printed-matter-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  cursor: pointer;
+}
+
+.printed-matter-modal-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  padding: 2rem;
+  cursor: default;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.printed-matter-modal-content img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 2px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+.printed-matter-modal-title {
+  font-family: 'Absans', sans-serif;
+  font-size: 1rem;
+  color: rgba(255, 255, 255, 0.9);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.printed-matter-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 2rem;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.3s ease, transform 0.2s ease;
+  z-index: 1001;
+}
+
+.printed-matter-modal-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
+.printed-matter-modal-close:active {
+  transform: scale(0.95);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .printed-matter-container {
+    padding-left: 150px;
+    height: 130vh;
+  }
+  
+  .printed-matter-item {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  }
+}
+
+@media (max-width: 768px) {
+  .printed-matter-container {
+    padding-left: 0;
+    padding-right: 1rem;
+    padding-top: 2rem;
+    height: 150vh;
+  }
+  
+  .printed-matter-item {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .printed-matter-modal-content {
+    padding: 1rem;
+    max-width: 95vw;
+  }
+  
+  .printed-matter-modal-close {
+    width: 36px;
+    height: 36px;
+    font-size: 1.5rem;
+    top: 0.5rem;
+    right: 0.5rem;
+  }
+  
+  .printed-matter-modal-title {
+    font-size: 0.875rem;
+  }
+}
+
+/* Print/Editorial Aesthetic Enhancements */
+.printed-matter-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+.printed-matter-item:hover::before {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Subtle texture overlay for printed matter feel */
+.printed-matter-item::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.02) 2px,
+      rgba(0, 0, 0, 0.02) 4px
+    );
+  pointer-events: none;
+  opacity: 0.3;
+  mix-blend-mode: multiply;
+}

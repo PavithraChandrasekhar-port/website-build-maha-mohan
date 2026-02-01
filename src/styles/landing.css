@@ -98,6 +98,33 @@
   pointer-events: auto;
 }
 
+/* Volume toggle - fixed left bottom, visible on all sections (video plays throughout) */
+.volume-toggle {
+  position: fixed;
+  bottom: 3rem;
+  left: 2rem;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.9);
+  cursor: pointer;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+.volume-toggle:hover {
+  color: rgba(255, 255, 255, 1);
+  opacity: 1;
+}
+.volume-toggle-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
 
 @media (max-width: 768px) {
   .landing-name {
@@ -113,6 +140,16 @@
     bottom: 2rem;
     font-size: clamp(8px, 1vw, 10px); /* Maintain 8pt base with variable width on mobile */
   }
-  
+
+  .volume-toggle {
+    bottom: 2rem;
+    left: 1.5rem;
+    width: 28px;
+    height: 28px;
+  }
+  .volume-toggle-icon {
+    width: 16px;
+    height: 16px;
+  }
 }
 

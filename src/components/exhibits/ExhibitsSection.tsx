@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
+import { LazyImage } from '@/components/media/LazyImage';
 import type { Exhibit } from '@/types/cms';
-import exhibitsData from '@/data/exhibits.json';
-import risdImage from '@/assets/media/Exhibits/RISD.png';
-import asSheShouldImage from '@/assets/media/Exhibits/As She Should.png';
+import { exhibitsFromFolders } from '@/utils/exhibitsFromFolders';
 import '@/styles/exhibits.css';
 
 interface ExhibitsSectionProps {
@@ -17,56 +16,33 @@ export default function ExhibitsSection({ isVisible = false, scrollProgress = 0 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [exhibits, setExhibits] = useState<Exhibit[]>([]);
   const [loadedImages, setLoadedImages] = useState<Record<string, HTMLImageElement>>({});
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [, setCurrentCardIndex] = useState(0);
   const [canStartHorizontalScroll, setCanStartHorizontalScroll] = useState(false);
   const [hasScrolledOnce, setHasScrolledOnce] = useState(false);
   const delayTimeoutRef = useRef<number | null>(null);
   const previousScrollProgressRef = useRef<number>(0);
+  const lastScrollPositionRef = useRef<number>(0);
+  const scrollTimeoutRef = useRef<number | null>(null);
 
-  // Load exhibits data
+  // Load exhibits from folder structure (placeholder + folder-based + placeholder)
   useEffect(() => {
-    try {
-      const data = exhibitsData as { exhibits: Exhibit[] };
-      setExhibits(data.exhibits || []);
-    } catch (error) {
-      console.error('Failed to load exhibits data:', error);
-    }
+    setExhibits(exhibitsFromFolders);
   }, []);
 
-  // Map exhibit titles to imported images
-  const getExhibitImage = (title: string): string | null => {
-    const imageMap: Record<string, string> = {
-      'RISD Grad Show': risdImage,
-      'As She Should': asSheShouldImage,
-    };
-    return imageMap[title] || null;
-  };
-
-  // Load images for exhibits
+  // Load images for exhibits (primary = exhibit.image or first of exhibit.images)
   useEffect(() => {
     const loadImages = async () => {
       const images: Record<string, HTMLImageElement> = {};
-      
       for (const exhibit of exhibits) {
-        // First check if exhibit has image path in data
-        let imageSrc = exhibit.image;
-        
-        // If no image path, try to match by title
-        if (!imageSrc) {
-          const matchedImage = getExhibitImage(exhibit.title);
-          if (matchedImage) {
-            imageSrc = matchedImage;
-          }
-        }
-        
-        if (imageSrc) {
+        const primarySrc = exhibit.image || (exhibit.images && exhibit.images[0]);
+        if (primarySrc) {
           try {
             const img = new Image();
             img.crossOrigin = 'anonymous';
             await new Promise((resolve, reject) => {
               img.onload = resolve;
               img.onerror = reject;
-              img.src = imageSrc!;
+              img.src = primarySrc;
             });
             images[exhibit.id] = img;
           } catch (error) {
@@ -74,19 +50,14 @@ export default function ExhibitsSection({ isVisible = false, scrollProgress = 0 
           }
         }
       }
-      
       setLoadedImages(images);
     };
-
-    if (exhibits.length > 0) {
-      loadImages();
-    }
+    if (exhibits.length > 0) loadImages();
   }, [exhibits]);
 
-  // Format label as [001], [002], etc.
   const formatLabel = (id: string): string => {
-    const num = id.padStart(3, '0');
-    return `[${num}]`;
+    if (id === 'placeholder-start' || id === 'placeholder-end') return '[—]';
+    return `[${id.padStart(3, '0')}]`;
   };
 
   // Track when section becomes visible and start delay timer
@@ -111,10 +82,15 @@ export default function ExhibitsSection({ isVisible = false, scrollProgress = 0 
         clearTimeout(delayTimeoutRef.current);
         delayTimeoutRef.current = null;
       }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+        scrollTimeoutRef.current = null;
+      }
       setThreeSecondsPassed(false);
       setCanStartHorizontalScroll(false);
       setHasScrolledOnce(false);
       previousScrollProgressRef.current = 0;
+      lastScrollPositionRef.current = 0;
     }
   }, [isVisible, threeSecondsPassed]);
 
@@ -135,14 +111,24 @@ export default function ExhibitsSection({ isVisible = false, scrollProgress = 0 
       // Only start horizontal scrolling after both conditions are met (3 seconds + one vertical scroll)
       if (canStartHorizontalScroll && hasScrolledOnce && threeSecondsPassed) {
         // Calculate which card should be visible based on vertical scroll progress
-        // scrollProgress (0.0 to 1.0) is directly tied to vertical scroll position
+        // Make it snap to one card at a time by using a larger step size
         const totalCards = exhibits.length;
-        // Map vertical scroll progress to horizontal card index (0 to totalCards - 1)
-        // As user scrolls down vertically, cards scroll horizontally
-        const targetIndex = Math.min(
-          Math.floor(scrollProgress * totalCards),
-          totalCards - 1 // Can reach last card
-        );
+        
+        // Divide scroll progress into discrete steps (one per card)
+        // Each card gets an equal portion of the scroll range
+        const cardStep = 1.0 / totalCards;
+        
+        // Find which card should be visible based on scroll progress
+        // Use Math.floor to snap to the current card, not interpolate between cards
+        // Ensure we can reach the last card: if progress is >= 0.99, force last card
+        let targetIndex: number;
+        if (scrollProgress >= 0.99) {
+          targetIndex = totalCards - 1; // Force last card when near completion
+        } else {
+          targetIndex = Math.floor(scrollProgress / cardStep);
+        }
+        targetIndex = Math.min(targetIndex, totalCards - 1); // Clamp to last card
+        targetIndex = Math.max(targetIndex, 0); // Clamp to first card
         
         // Update current card index
         setCurrentCardIndex(targetIndex);
@@ -155,18 +141,49 @@ export default function ExhibitsSection({ isVisible = false, scrollProgress = 0 
           const containerRect = scrollContainerRef.current.getBoundingClientRect();
           
           // Calculate horizontal scroll position to center the target card
-          // This position is directly controlled by vertical scroll progress
           const cardLeft = cardElement.offsetLeft;
           const cardWidth = cardRect.width;
           const containerWidth = containerRect.width;
-          // Center the card in the visible area (accounting for 3.5 cards visible)
-          const scrollPosition = cardLeft - (containerWidth / 2) + (cardWidth / 2);
+          // Center the card in the visible area
+          let scrollPosition = cardLeft - (containerWidth / 2) + (cardWidth / 2);
           
-          // Scroll horizontally based on vertical scroll position
-          scrollContainerRef.current.scrollTo({
-            left: Math.max(0, scrollPosition),
-            behavior: 'smooth'
-          });
+          // For the last card, ensure we scroll to the maximum possible position
+          if (targetIndex === totalCards - 1) {
+            const maxScroll = scrollContainerRef.current.scrollWidth - containerWidth;
+            // Use the maximum scroll position to ensure last card is fully visible
+            scrollPosition = Math.max(scrollPosition, maxScroll);
+          }
+          
+          // Only scroll if the position has changed significantly (avoid unnecessary scrolls)
+          const scrollDiff = Math.abs(scrollPosition - lastScrollPositionRef.current);
+          if (scrollDiff > 1 || targetIndex === totalCards - 1) {
+            // Always scroll for last card, or if position changed significantly
+            lastScrollPositionRef.current = scrollPosition;
+            
+            // Clear any pending scroll timeout
+            if (scrollTimeoutRef.current) {
+              clearTimeout(scrollTimeoutRef.current);
+            }
+            
+            // Scroll horizontally - use instant behavior for snapping effect
+            scrollContainerRef.current.scrollTo({
+              left: Math.max(0, scrollPosition),
+              behavior: 'smooth' // Keep smooth for better UX, but snapping is controlled by discrete steps
+            });
+            
+            // For the last card, also try to scroll to max after a short delay to ensure completion
+            if (targetIndex === totalCards - 1) {
+              scrollTimeoutRef.current = window.setTimeout(() => {
+                if (scrollContainerRef.current) {
+                  const maxScroll = scrollContainerRef.current.scrollWidth - scrollContainerRef.current.clientWidth;
+                  scrollContainerRef.current.scrollTo({
+                    left: maxScroll,
+                    behavior: 'smooth'
+                  });
+                }
+              }, 100);
+            }
+          }
         }
       }
       
@@ -182,10 +199,10 @@ export default function ExhibitsSection({ isVisible = false, scrollProgress = 0 
       className={`exhibits-section ${isVisible ? 'visible' : ''}`}
       initial={prefersReducedMotion ? {} : { opacity: 0 }}
       animate={{ opacity: isVisible ? 1 : 0 }}
-      transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: 0.6, ease: [0.4, 0, 0.2, 1] }}
       style={{ 
-        display: 'block',
-        opacity: isVisible ? 1 : 0, // Force opacity for immediate visibility
+        display: isVisible ? 'block' : 'none', // Hide completely when not visible
+        opacity: isVisible ? 1 : 0,
       }}
     >
       {/* WebGL Background effects handled by BlurOverlay in HomePage - reuses same context pattern */}
@@ -198,29 +215,19 @@ export default function ExhibitsSection({ isVisible = false, scrollProgress = 0 
         )}
         
         <div className="exhibits-scroll-container" ref={scrollContainerRef}>
-          {exhibits.length > 0 ? exhibits.map((exhibit, index) => {
+          {exhibits.length > 0 ? exhibits.map((exhibit) => {
             const imageElement = loadedImages[exhibit.id];
-            // Check if we have an image element OR a matched image path
-            const matchedImage = getExhibitImage(exhibit.title);
-            const hasImage = !!imageElement || (!!matchedImage && !imageElement);
+            const imageSrc = imageElement?.src ?? exhibit.image ?? exhibit.images?.[0];
 
             return (
               <div key={exhibit.id} className="exhibit-card">
-                <span className="exhibit-label">{formatLabel(exhibit.id)}</span>
-                
                 <div className="exhibit-image-container">
-                  {/* Using regular images to avoid creating multiple WebGL contexts */}
-                  {/* WebGL blur overlay already provides WebGL effects for the section */}
-                  {imageElement ? (
-                    <img
-                      src={imageElement.src}
+                  {imageSrc ? (
+                    <LazyImage
+                      src={imageSrc}
                       alt={exhibit.title}
-                      className="exhibit-image"
-                    />
-                  ) : matchedImage ? (
-                    <img
-                      src={matchedImage}
-                      alt={exhibit.title}
+                      responsive
+                      widths={[400, 600, 800, 1024, 1280]}
                       className="exhibit-image"
                     />
                   ) : (
@@ -229,6 +236,7 @@ export default function ExhibitsSection({ isVisible = false, scrollProgress = 0 
                 </div>
 
                 <div className="exhibit-info">
+                  <span className="exhibit-label">{formatLabel(exhibit.id)}</span>
                   <h3 className="exhibit-title">{exhibit.title}</h3>
                   <p className="exhibit-venue">{exhibit.venue}</p>
                   <p className="exhibit-location">{exhibit.location}</p>

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, memo, useState } from 'react';
-import { createTexture, disposeTexture, disposeBuffer } from '@/utils/webgl/buffer';
+import { disposeTexture, disposeBuffer } from '@/utils/webgl/buffer';
 import { isWebGLSupported, trackContextCreated, trackContextDestroyed } from '@/utils/webgl/context';
 import { createShaderProgram, getUniformLocations, getAttributeLocations } from '@/utils/webgl/shader';
 import vertexShader from '@/shaders/vertex/passthrough.glsl?raw';
