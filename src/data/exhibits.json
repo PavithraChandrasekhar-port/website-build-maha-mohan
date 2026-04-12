@@ -1,0 +1,53 @@
+{
+  "exhibits": [
+    {
+      "id": "001",
+      "title": "Absence takes form",
+      "venue": "Wasserman Projects",
+      "location": "Detroit, MI",
+      "year": "2026",
+      "image": "",
+      "status": "upcoming"
+    },
+    {
+      "id": "002",
+      "title": "Ceramic Biennale, Sol Koffler Gallery",
+      "venue": "Sol Koffler Gallery",
+      "location": "Providence, RI",
+      "year": "2024",
+      "image": "",
+      "status": "past",
+      "assetFolder": "Ceramic Biennale, Sol Koffler Gallery"
+    },
+    {
+      "id": "003",
+      "title": "MFA Grad Show 2025",
+      "venue": "Rhode Island Convention Center",
+      "location": "Providence, RI",
+      "year": "2025",
+      "image": "",
+      "status": "upcoming",
+      "assetFolder": "MFA Grad Show 2025"
+    },
+    {
+      "id": "004",
+      "title": "Symbio, Split",
+      "venue": "Gelman Gallery, RISD Museum",
+      "location": "Providence, RI",
+      "year": "2024",
+      "image": "",
+      "status": "past",
+      "assetFolder": "Symbio, Split"
+    },
+    {
+      "id": "005",
+      "title": "The Big Fat South Asian Show",
+      "venue": "RISD Museum",
+      "location": "Providence, RI",
+      "year": "2024",
+      "image": "",
+      "status": "past",
+      "assetFolder": "The Big Fat South Asian Show"
+    }
+  ]
+}

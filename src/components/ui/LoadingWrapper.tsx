@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 import LoadingPage from './LoadingPage';
 import { preloadHomepageAssets } from '@/utils/loading/preloadAssets';
 
@@ -7,55 +6,59 @@ interface LoadingWrapperProps {
   children: React.ReactNode;
 }
 
-// Global flag to track if initial homepage load has completed
-let initialHomepageLoadComplete = false;
-
 /**
  * Wrapper component that shows loading page before homepage
- * Shows loading only on initial homepage load, not on navigation
+ * Only shows loading page once at the beginning of the website (not between pages)
  */
 export default function LoadingWrapper({ children }: LoadingWrapperProps) {
-  console.log('[LoadingWrapper] Rendering');
-  const location = useLocation();
-  const [isLoading, setIsLoading] = useState(!initialHomepageLoadComplete && location.pathname === '/');
+  const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    // Only show loading on initial homepage load
-    if (!initialHomepageLoadComplete && location.pathname === '/') {
-      console.log('[LoadingWrapper] useEffect running, isLoading:', isLoading);
-      // Always load assets and show loading page
-      const loadAssets = async () => {
-        console.log('[LoadingWrapper] Starting asset preload');
-        try {
-          await preloadHomepageAssets((prog) => {
-            console.log('[LoadingWrapper] Progress update:', prog);
-            setProgress(prog);
-          }, 2000); // Minimum 2 seconds loading time
-          
-          console.log('[LoadingWrapper] Asset preload complete, hiding loading');
-          initialHomepageLoadComplete = true;
-          setIsLoading(false);
-        } catch (error) {
-          console.error('[LoadingWrapper] Error preloading assets:', error);
-          // Still hide loading even if there's an error
-          initialHomepageLoadComplete = true;
-          setIsLoading(false);
-        }
-      };
-
-      loadAssets();
-    } else {
-      // If already loaded or not on homepage, don't show loading
+    // Check if this is the very first visit ever (not a refresh/reload)
+    // Use localStorage to persist across sessions - only show on first visit ever
+    const hasVisitedBefore = localStorage.getItem('mahaMohanHasVisited');
+    
+    // Allow forcing reload with ?forceLoading=true query param (for development)
+    const urlParams = new URLSearchParams(window.location.search);
+    const forceLoading = urlParams.get('forceLoading') === 'true';
+    
+    // Show loading page ONLY on first visit ever
+    // - Initial page load (first visit): YES - show loading
+    // - Page refresh (F5): NO - skip loading (hasVisitedBefore is true)
+    // - Browser reload: NO - skip loading (hasVisitedBefore is true)
+    // - Client-side navigation: NO - component doesn't remount (already handled)
+    
+    if (hasVisitedBefore === 'true' && !forceLoading) {
+      // User has visited before - skip loading page
       setIsLoading(false);
+      return;
     }
-  }, [location.pathname]);
 
-  console.log('[LoadingWrapper] Render - isLoading:', isLoading, 'progress:', progress, 'pathname:', location.pathname);
+    // This is the first visit - show loading page and preload assets
+    const loadAssets = async () => {
+      try {
+        await preloadHomepageAssets((prog) => {
+          setProgress(prog);
+        }, 2000); // Minimum 2 seconds loading time
+        
+        // Mark that user has visited (persists across sessions)
+        localStorage.setItem('mahaMohanHasVisited', 'true');
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error preloading assets:', error);
+        // Still mark as visited even if there's an error
+        localStorage.setItem('mahaMohanHasVisited', 'true');
+        setIsLoading(false);
+      }
+    };
+
+    loadAssets();
+  }, []);
 
   return (
     <>
-      {/* Overlay loading page on top - only show when loading homepage */}
+      {/* Overlay loading page on top - always show when loading */}
       {isLoading && (
         <LoadingPage 
           progress={progress}

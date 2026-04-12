@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { LazyImage } from '@/components/media/LazyImage';
 import type { Exhibit } from '@/types/cms';
-import { exhibitsFromFolders } from '@/utils/exhibitsFromFolders';
+import { fetchExhibits } from '@/utils/cms/fetcher';
 import backArrowSvg from '@/icons/Back arrow.svg';
 import '@/styles/exhibits.css';
 
@@ -19,9 +19,9 @@ const ANIMATION_DURATION = 0.5; // seconds
 
 export default function ExhibitsSectionScrollHijack({ 
   isVisible = false, 
-  scrollProgress = 0,
-  exhibitsStartPosition = 0,
-  onExhibitsEndPosition
+  scrollProgress: _scrollProgress = 0,
+  exhibitsStartPosition: _exhibitsStartPosition = 0,
+  onExhibitsEndPosition: _onExhibitsEndPosition
 }: ExhibitsSectionScrollHijackProps) {
   const prefersReducedMotion = useReducedMotion();
   const [exhibits, setExhibits] = useState<Exhibit[]>([]);
@@ -35,11 +35,23 @@ export default function ExhibitsSectionScrollHijack({
   const isAnimatingRef = useRef(false);
   const isProcessingRef = useRef(false); // Guard against rapid multiple clicks
 
-  // Load exhibits from folder structure (placeholder + folder-based + placeholder)
+  // Same data as CMS: src/data/exhibits.json (bundled at build; redeploy to publish changes)
   useEffect(() => {
-    setExhibits(exhibitsFromFolders);
-    const maxStartIndex = Math.max(0, exhibitsFromFolders.length - CARDS_VISIBLE);
-    setStartIndex(prev => Math.min(prev, maxStartIndex));
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await fetchExhibits();
+        if (cancelled) return;
+        setExhibits(list);
+        const maxStartIndex = Math.max(0, list.length - CARDS_VISIBLE);
+        setStartIndex((prev) => Math.min(prev, maxStartIndex));
+      } catch {
+        if (!cancelled) setExhibits([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Cleanup intervals on unmount
@@ -375,21 +387,16 @@ export default function ExhibitsSectionScrollHijack({
               key={startIndex}
               className="exhibits-grid"
               custom={direction}
-              initial={prefersReducedMotion || !direction ? false : (dir) => ({ 
-                x: dir === 'left' ? 300 : -300 
-              })}
+              initial={prefersReducedMotion || !direction ? undefined : direction === 'left' ? { x: 300 } : { x: -300 }}
               animate={{ x: 0 }}
-              exit={prefersReducedMotion || !direction ? false : (dir) => ({ 
-                x: dir === 'left' ? -300 : 300 
-              })}
+              exit={prefersReducedMotion || !direction ? undefined : direction === 'left' ? { x: -300 } : { x: 300 }}
               transition={{ 
                 duration: prefersReducedMotion ? 0 : ANIMATION_DURATION,
                 ease: [0.4, 0, 0.2, 1]
               }}
             >
-            {visibleCards.map((exhibit, gridIndex) => {
+            {visibleCards.map((exhibit) => {
               const imageElement = loadedImages[exhibit.id];
-              const actualIndex = startIndex + gridIndex;
               const hoverImages = loadedImageArrays[exhibit.id] || [];
               const currentHoverIndex = hoverImageIndex[exhibit.id] || 0;
               const isHovered = hoveredExhibitId === exhibit.id;

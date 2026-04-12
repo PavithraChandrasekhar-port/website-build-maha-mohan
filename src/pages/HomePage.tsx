@@ -12,10 +12,6 @@ import '@/styles/landing.css';
 
 // Exhibits section height - since we're using button navigation, exhibits section is in normal document flow
 // The section will naturally take up space, so we just need to track when we've scrolled past it
-const EXHIBITS_SECTION_HEIGHT = 1.0; // 100vh for exhibits section
-const TRANSITION_ZONE = 0.5; // 50vh transition zone
-const TOTAL_EXHIBITS_SCROLL = EXHIBITS_SECTION_HEIGHT + TRANSITION_ZONE; // 100vh + 50vh = 150vh
-
 export default function HomePage() {
   const prefersReducedMotion = useReducedMotion();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -40,11 +36,11 @@ export default function HomePage() {
   const [lastWorkCenterPosition, setLastWorkCenterPosition] = useState(0);
   const [exhibitsTriggerDelay, setExhibitsTriggerDelay] = useState(false);
   const [maxBlurReached, setMaxBlurReached] = useState(false);
-  const [printedMatterTriggerDelay, setPrintedMatterTriggerDelay] = useState(false);
+  const [_printedMatterTriggerDelay, _setPrintedMatterTriggerDelay] = useState(false);
   const [maxPrintedMatterBlurReached, setMaxPrintedMatterBlurReached] = useState(false);
-  const [, setExhibitsEndPosition] = useState(0);
+  const [, _setExhibitsEndPosition] = useState(0);
   const [exhibitsStartScroll, setExhibitsStartScroll] = useState(0); // Track scroll position when exhibits appears
-  const [printedMatterStartScroll, setPrintedMatterStartScroll] = useState(0); // Track scroll position when printed matter appears
+  const [_printedMatterStartScroll, setPrintedMatterStartScroll] = useState(0); // Track scroll position when printed matter appears
   const [videoMuted, setVideoMuted] = useState(true); // Start muted for autoplay; user can unmute
   const delayTimeoutRef = useRef<number | null>(null);
   const printedMatterDelayTimeoutRef = useRef<number | null>(null);
@@ -143,7 +139,6 @@ export default function HomePage() {
         const scrollPastLastWork = scrollY - lastWorkCenterPosition;
         const delayThreshold = viewportHeight * 0.1; // 10vh delay after last work center
         const blurRangeExhibits = viewportHeight * 0.3; // Blur over 30vh
-        const exhibitsFadeRange = viewportHeight * 0.2; // Exhibits fade in over 20vh
         
         // Check if we've scrolled past last work center + delay threshold
         if (scrollPastLastWork >= delayThreshold) {
@@ -579,9 +574,8 @@ export default function HomePage() {
           isVisible={exhibitsVisible}
           scrollProgress={exhibitsScrollProgress}
           exhibitsStartPosition={exhibitsStartScroll}
-          onExhibitsEndPosition={(endPosition) => {
-            // Optional: You can use this to track when exhibits section ends
-            // The component will automatically handle the transition
+          onExhibitsEndPosition={(_endPosition) => {
+            // Optional: track when exhibits section ends
           }}
         />
       </div>

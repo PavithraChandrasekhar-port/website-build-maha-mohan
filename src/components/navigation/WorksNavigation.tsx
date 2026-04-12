@@ -27,7 +27,7 @@ const navItems: NavItem[] = [
 
 // Module-level log to verify file is loaded
 
-export default function WorksNavigation({ isVisible, activeSection, worksEndPosition = 0, lastWorkCenterPosition = 0, exhibitsStartScroll = 0, onNavSectionClick }: WorksNavigationProps) {
+export default function WorksNavigation({ isVisible, activeSection, worksEndPosition = 0, lastWorkCenterPosition = 0, exhibitsStartScroll: _exhibitsStartScroll = 0, onNavSectionClick }: WorksNavigationProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
