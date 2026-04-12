@@ -44,6 +44,7 @@ export default function AdminPage() {
 
   const [selectedExhibit, setSelectedExhibit] = useState<number | null>(null);
   const [selectedProject, setSelectedProject] = useState<number | null>(null);
+  const [confirmDeleteProjectIndex, setConfirmDeleteProjectIndex] = useState<number | null>(null);
 
   const pushToast = (kind: Toast['kind'], message: string) => {
     const id = `${Date.now()}-${Math.random()}`;
@@ -177,7 +178,7 @@ export default function AdminPage() {
       <section className="admin-content">
         <header className="admin-header">
           <h2>{tabs.find((t) => t.id === activeTab)?.label}</h2>
-          <button onClick={saveCurrentTab} disabled={saving}>
+          <button type="button" onClick={saveCurrentTab} disabled={saving}>
             {saving ? 'Saving...' : 'Save'}
           </button>
         </header>
@@ -668,13 +669,11 @@ export default function AdminPage() {
                     }}
                   />
                   <button
+                    type="button"
                     className="admin-danger"
                     onClick={() => {
-                      if (!window.confirm('Do you really want to quit?')) return;
-                      const next = projects.filter((_, i) => i !== selectedProject);
-                      setProjects(next);
-                      setSelectedProject(null);
-                      setUnsaved(true);
+                      if (selectedProject === null) return;
+                      setConfirmDeleteProjectIndex(selectedProject);
                     }}
                   >
                     Delete project
@@ -758,6 +757,47 @@ export default function AdminPage() {
           </div>
         )}
       </section>
+
+      {confirmDeleteProjectIndex !== null && projects[confirmDeleteProjectIndex] && (
+        <div
+          className="admin-modal-backdrop"
+          role="presentation"
+          onClick={() => setConfirmDeleteProjectIndex(null)}
+        >
+          <div
+            className="admin-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-delete-project-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="admin-delete-project-title">Delete project?</h3>
+            <p>
+              Remove &quot;{projects[confirmDeleteProjectIndex].name}&quot; from the list? This cannot be
+              undone.
+            </p>
+            <div className="admin-modal-actions">
+              <button type="button" onClick={() => setConfirmDeleteProjectIndex(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="admin-danger"
+                onClick={() => {
+                  const idx = confirmDeleteProjectIndex;
+                  setConfirmDeleteProjectIndex(null);
+                  const next = projects.filter((_, i) => i !== idx);
+                  setProjects(next);
+                  setSelectedProject(null);
+                  setUnsaved(true);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="admin-toast-wrap">
         {toasts.map((toast) => (

@@ -1,12 +1,42 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import fs from "node:fs";
 import path from "path";
+import { defineConfig, loadEnv, type Plugin } from "vite";
+import react from "@vitejs/plugin-react";
 import { devApiPlugin } from "./vite-plugin-dev-api";
 
-export default defineConfig({
-  base: process.env.VITE_BASE_PATH || "/",
+/** GitHub Pages project URLs are /repo/... — spa-github-pages 404 script needs pathSegmentsToKeep = 1 (not 0). */
+function patchGithubPages404(baseUrl: string): Plugin {
+  return {
+    name: "patch-github-pages-404",
+    apply: "build",
+    closeBundle() {
+      const out = path.resolve(__dirname, "dist/404.html");
+      if (!fs.existsSync(out)) return;
+      const segments = baseUrl.replace(/\/$/, "").split("/").filter(Boolean).length;
+      let html = fs.readFileSync(out, "utf8");
+      html = html.replace(/var pathSegmentsToKeep = \d+;/, `var pathSegmentsToKeep = ${segments};`);
+      fs.writeFileSync(out, html);
+    },
+  };
+}
+
+function resolveBase(mode: string): string {
+  const loaded = loadEnv(mode, process.cwd(), "");
+  const raw = process.env.VITE_BASE_PATH || loaded.VITE_BASE_PATH || "/";
+  if (raw === "/" || raw === "") return "/";
+  let b = raw.trim();
+  if (!b.startsWith("/")) b = `/${b}`;
+  if (!b.endsWith("/")) b = `${b}/`;
+  return b;
+}
+
+export default defineConfig(({ mode }) => {
+  const base = resolveBase(mode);
+  return {
+  base,
   plugins: [
     devApiPlugin(),
+    patchGithubPages404(base),
     react({
       // Don't fail on TypeScript errors during dev - let HMR work
       typescript: {
@@ -77,4 +107,5 @@ export default defineConfig({
   optimizeDeps: {
     include: ["react", "react-dom", "react-router-dom", "framer-motion"],
   },
+};
 });

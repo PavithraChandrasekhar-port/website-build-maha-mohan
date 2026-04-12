@@ -93,22 +93,8 @@ function AppRoutes() {
             </AnimatedPage>
           }
         />
-        <Route
-          path="/admin"
-          element={
-            <AnimatedPage>
-              <AdminPage />
-            </AnimatedPage>
-          }
-        />
-        <Route
-          path="/admin/login"
-          element={
-            <AnimatedPage>
-              <AdminLoginPage />
-            </AnimatedPage>
-          }
-        />
+        <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/login" element={<AdminLoginPage />} />
       </Routes>
     </Suspense>
   );

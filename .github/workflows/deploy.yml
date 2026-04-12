@@ -51,7 +51,10 @@ jobs:
       - name: Build
         env:
           VITE_BASE_PATH: ${{ steps.base_path.outputs.base_path }}
-        run: npm run build
+        run: |
+          echo "VITE_BASE_PATH=$VITE_BASE_PATH (must match site path, e.g. /repo-name/ for project pages)"
+          npm run build
+          grep -o 'src="[^"]*assets/js/index-[^"]*"' dist/index.html | head -1 || true
 
       - name: Verify .nojekyll exists in dist
         run: |
