@@ -1,3 +1,7 @@
+# Deploys by pushing dist/ to branch `gh-pages` (no 1 GiB Actions artifact limit).
+# In the repo: Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: gh-pages, folder: / (root).
+# If it still says "GitHub Actions", switch to the branch source above.
+
 name: Deploy to GitHub Pages
 
 on:
@@ -7,22 +11,20 @@ on:
       - master
   workflow_dispatch:
 
-# Use Node.js 24 for JS-based actions (checkout, setup-node, etc.); Node 20 is deprecated on runners.
+# Use Node.js 24 for JS-based actions; Node 20 is deprecated on runners.
 # https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -53,42 +55,16 @@ jobs:
 
       - name: Verify .nojekyll exists in dist
         run: |
-          if [ -f dist/.nojekyll ]; then
-            echo "✅ .nojekyll found in dist/"
-          else
-            echo "⚠️ .nojekyll not found, creating it..."
+          if [ ! -f dist/.nojekyll ]; then
             touch dist/.nojekyll
-            echo "✅ Created .nojekyll in dist/"
           fi
 
-      - name: Check dist size (GitHub Pages artifact limit ~1 GiB)
-        run: |
-          SIZE=$(du -sb dist | cut -f1)
-          LIMIT=$((1024 * 1024 * 1024))
-          echo "dist/ size: $(du -sh dist | cut -f1) ($SIZE bytes)"
-          if [ "$SIZE" -gt "$LIMIT" ]; then
-            echo "::error::dist/ is larger than the ~1 GiB limit for GitHub Pages deployment artifacts. Compress images/videos in src/assets, drop unused files, or deploy the site on Vercel/Netlify (higher limits)."
-            exit 1
-          fi
+      - name: Dist size (info)
+        run: du -sh dist
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v6
+      - name: Deploy to gh-pages branch
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          enablement: true
-
-      # No floating @v5 tag on this action — use v5.0.0 (see actions/upload-pages-artifact tags).
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v5.0.0
-        with:
-          path: "./dist"
-
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v5
+          branch: gh-pages
+          folder: dist
+          clean: true
