@@ -1,0 +1,1 @@
+import{a as c,b as r,c as a,f as n,i as o}from"./fetcher-DdKwrFru.js";class i{async getProjects(){return c()}async getProject(t){return r(t)}async getArtistInfo(){return a()}async getExhibits(){return n()}invalidateCache(t){o(t)}}const e=new i,f=()=>e.getProjects(),h=s=>e.getProject(s),j=()=>e.getArtistInfo();export{j as a,h as b,f as g};
