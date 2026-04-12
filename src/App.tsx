@@ -5,12 +5,13 @@ import LoadingWrapper from "./components/ui/LoadingWrapper";
 import AppRoutes from "./routes/AppRoutes";
 
 function App() {
-  // Get base path from environment (set during build for GitHub Pages)
-  const basePath = import.meta.env.VITE_BASE_PATH || "/";
+  // Must match vite.config `base` (e.g. GitHub Pages subpath). Prefer Vite’s BASE_URL over a duplicate env.
+  const base = import.meta.env.BASE_URL || "/";
+  const basename = base === "/" ? undefined : base.replace(/\/$/, "");
 
   return (
     <ErrorBoundary>
-      <BrowserRouter basename={basePath}>
+      <BrowserRouter basename={basename}>
         <AppProviders>
           <LoadingWrapper>
             <AppRoutes />

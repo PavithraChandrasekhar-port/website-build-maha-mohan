@@ -1,5 +1,10 @@
-import type { Project } from '@/types/cms';
+import type { MediaItem, Project } from '@/types/cms';
 import { getAllWorks, type WorkDetail } from '@/utils/works/workData';
+
+/** CMS JSON may store `/src/assets/...` — that only exists in Vite dev; production must use bundled URLs from workData. */
+function isViteDevAssetPath(url: string | undefined): boolean {
+  return typeof url === 'string' && url.startsWith('/src/');
+}
 
 /** Gallery order — matches former WorksGallery mockWorks sequence. */
 export const WORK_GALLERY_ORDER: readonly string[] = [
@@ -65,13 +70,28 @@ export function buildDefaultProjectsFromWorks(): Project[] {
   return ordered;
 }
 
+function mergeMediaWithDefaults(baseMedia: MediaItem[], overMedia: MediaItem[]): MediaItem[] {
+  return overMedia.map((item, i) => {
+    const fallback = baseMedia[i];
+    const url = isViteDevAssetPath(item.url) ? (fallback?.url ?? item.url) : item.url;
+    const thumbnail =
+      item.thumbnail && isViteDevAssetPath(item.thumbnail)
+        ? (fallback?.thumbnail ?? item.thumbnail)
+        : item.thumbnail;
+    return { ...item, url, thumbnail };
+  });
+}
+
 function mergeProjectDeep(base: Project, over: Project): Project {
-  const cover =
-    over.coverImage?.url?.trim()
-      ? { ...base.coverImage, ...over.coverImage, url: over.coverImage.url }
-      : base.coverImage;
+  const overCoverUrl = over.coverImage?.url?.trim();
+  const useStoredCover = overCoverUrl && !isViteDevAssetPath(overCoverUrl);
+  const cover = useStoredCover
+    ? { ...base.coverImage, ...over.coverImage, url: over.coverImage!.url }
+    : base.coverImage;
   const media =
-    over.media && over.media.length > 0 ? over.media : base.media;
+    over.media && over.media.length > 0
+      ? mergeMediaWithDefaults(base.media, over.media)
+      : base.media;
   return {
     ...base,
     ...over,
