@@ -66,6 +66,7 @@ class BlobJsonDataSource {
       contentType: 'application/json; charset=utf-8',
       token: this.token,
       addRandomSuffix: false,
+      allowOverwrite: true,
     });
   }
 }
