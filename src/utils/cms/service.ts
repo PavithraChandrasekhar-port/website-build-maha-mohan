@@ -1,5 +1,13 @@
-import { fetchProjects, fetchProjectById, fetchArtistInfo, fetchExhibits, invalidateCache } from './fetcher';
+import {
+  fetchProjects,
+  fetchProjectById,
+  fetchArtistInfo,
+  fetchExhibits,
+  fetchPrintedMatter,
+  invalidateCache,
+} from './fetcher';
 import type { Project, ArtistInfo, Exhibit } from '@/types/cms';
+import type { PrintedMatterData } from '@/types/admin';
 
 /**
  * CMS Service Layer
@@ -40,6 +48,10 @@ export class CMSService {
     return fetchExhibits();
   }
 
+  async getPrintedMatter(): Promise<PrintedMatterData> {
+    return fetchPrintedMatter();
+  }
+
   /**
    * Invalidate cache (useful after updates)
    */
@@ -56,4 +68,5 @@ export const getProjects = () => cmsService.getProjects();
 export const getProject = (id: string) => cmsService.getProject(id);
 export const getArtistInfo = () => cmsService.getArtistInfo();
 export const getExhibits = () => cmsService.getExhibits();
+export const getPrintedMatter = () => cmsService.getPrintedMatter();
 

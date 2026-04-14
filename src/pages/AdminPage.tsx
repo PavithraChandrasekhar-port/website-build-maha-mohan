@@ -10,6 +10,7 @@ import {
   uploadToBlob,
 } from '@/utils/adminApi';
 import { mergeProjectsWithDefaults } from '@/utils/cms/projectsMerge';
+import { broadcastCmsUpdate, invalidateCache } from '@/utils/cms/fetcher';
 import '@/styles/admin.css';
 
 const CMS_AUTH_DISABLED = import.meta.env.VITE_CMS_AUTH_DISABLED === 'true';
@@ -137,6 +138,11 @@ export default function AdminPage() {
       } else if (activeTab === 'printed-matter') {
         await saveCmsSection('printed-matter', printedMatter);
       }
+
+      // Make the public site reflect changes immediately (this tab + other open tabs).
+      invalidateCache(activeTab);
+      broadcastCmsUpdate(activeTab);
+
       setUnsaved(false);
       pushToast('success', 'Saved successfully');
     } catch (err) {

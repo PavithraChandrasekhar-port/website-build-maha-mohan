@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { LazyImage } from '@/components/media/LazyImage';
 import '@/styles/printed-matter.css';
-import printedMatterData from '@/data/printed-matter.json';
+import { fetchPrintedMatter } from '@/utils/cms/fetcher';
 
 // Import images from various projects/works for printed matter
 import alchemyImg1 from '@/assets/media/Works/Alchemy/Divine Comedy/Divine Comedy.jpg';
@@ -374,28 +374,37 @@ export default function PrintedMatterSection({ isVisible = false, scrollProgress
   
   // Load printed matter items from JSON
   useEffect(() => {
-    try {
-      const data = printedMatterData as { items: Array<{ id: string; image: string; title?: string }> };
-      const items = (data.items || []).map(item => {
-        const imagePath = imageMap[item.image];
-        if (!imagePath) {
-          console.warn(`Image not found for key: ${item.image}`);
-        }
-        return {
-          id: item.id,
-          image: imagePath || '',
-          title: item.title,
-        };
-      }).filter(item => item.image);
-      
-      // Display 7-8 images within the existing layout
-      const targetCount = Math.min(8, Math.max(7, items.length));
-      const limitedItems = items.slice(0, targetCount);
-      setPrintedMatterItems(limitedItems);
-    } catch (error) {
-      console.error('Failed to load printed matter data:', error);
-      setPrintedMatterItems([]);
-    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await fetchPrintedMatter();
+        const items = (data.items || [])
+          .map((item) => {
+            const imagePath = imageMap[item.image];
+            if (!imagePath) {
+              console.warn(`Image not found for key: ${item.image}`);
+            }
+            return {
+              id: item.id,
+              image: imagePath || '',
+              title: item.title,
+            };
+          })
+          .filter((item) => item.image);
+
+        // Display 7-8 images within the existing layout
+        const targetCount = Math.min(8, Math.max(7, items.length));
+        const limitedItems = items.slice(0, targetCount);
+        if (!cancelled) setPrintedMatterItems(limitedItems);
+      } catch (error) {
+        console.error('Failed to load printed matter data:', error);
+        if (!cancelled) setPrintedMatterItems([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   // Initialize positions when items are loaded
