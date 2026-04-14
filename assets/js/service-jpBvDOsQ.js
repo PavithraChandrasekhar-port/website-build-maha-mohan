@@ -1,0 +1,1 @@
+import{c as s,d as c,e as a,f as n,h as o,i}from"./index-DPDc_nCk.js";class g{async getProjects(){return s()}async getProject(t){return c(t)}async getArtistInfo(){return a()}async getExhibits(){return n()}async getPrintedMatter(){return o()}invalidateCache(t){i(t)}}const e=new g,h=()=>e.getProjects(),P=r=>e.getProject(r),j=()=>e.getArtistInfo();export{j as a,P as b,h as g};
